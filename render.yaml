@@ -1,0 +1,24 @@
+# Rakesh Cloth Stores — GitHub + Render (no Hostinger)
+
+services:
+  - type: web
+    name: rakesh-cloth-stores
+    runtime: node
+    plan: starter
+    region: singapore
+    buildCommand: npm install && npm run build
+    startCommand: npm start
+    healthCheckPath: /api/settings
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: DATA_DIR
+        value: /var/data
+      - key: CORS_ORIGINS
+        sync: false
+    disk:
+      name: rakesh-data
+      mountPath: /var/data
+      sizeGB: 1

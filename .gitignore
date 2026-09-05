@@ -1,0 +1,11 @@
+node_modules
+dist
+.env
+.env.local
+*.db-shm
+*.db-wal
+server/store.db
+.hostinger-staging
+rakesh-hostinger.zip
+server/uploads/*
+!server/uploads/.gitkeep
