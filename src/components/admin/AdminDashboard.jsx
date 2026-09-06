@@ -12,7 +12,7 @@ import {
   Filler,
 } from 'chart.js';
 import { Bar, Line } from 'react-chartjs-2';
-import { apiGet, apiPost, jitsiUrl, uploadFile } from '../../api/client';
+import { apiGet, apiPost, orderStatusMeta, uploadFile } from '../../api/client';
 import { useStore } from '../../context/StoreContext';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, Title, Tooltip, Legend, Filler);
@@ -126,7 +126,6 @@ function StockTab() {
 
 function OrdersTab({ historyOnly }) {
   const { adminOrders, fetchAdminOrders, confirmOrder, finishDelivery } = useStore();
-  const [joinRoom, setJoinRoom] = useState('');
   const [bill, setBill] = useState('');
   const [date, setDate] = useState('');
 
@@ -157,53 +156,52 @@ function OrdersTab({ historyOnly }) {
         <input type="date" value={date} onChange={(e) => setDate(e.target.value)} />
         <button className="admin-nav-tab" onClick={downloadCsv}>Download Excel</button>
       </div>
-      {joinRoom ? (
-        <div className="rks-video-stage" style={{ marginBottom: 18 }}>
-          <iframe title="Admin video call" src={`${jitsiUrl(joinRoom)}#config.prejoinPageEnabled=true`} allow="camera; microphone; fullscreen; display-capture; autoplay" allowFullScreen />
-          <button className="outline-gold-btn" style={{ marginTop: 10 }} onClick={() => setJoinRoom('')}>Close Call</button>
-        </div>
-      ) : null}
-      {list.map((o) => (
-        <div className="admin-order-card" key={o.id}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 10, flexWrap: 'wrap' }}>
-            <div>
-              <b>{o.bill_no}</b> • {o.order_number}<br />
-              {o.customer_name} • {o.mobile}<br />
-              {o.address}, {o.city}
+      {list.map((o) => {
+        const status = orderStatusMeta(o.order_status);
+        return (
+          <div className="admin-order-card" key={o.id}>
+            <div className="admin-order-head">
+              <div>
+                <b>{o.bill_no}</b> • {o.order_number}<br />
+                {o.customer_name} • {o.mobile}<br />
+                {o.address}, {o.city}
+              </div>
+              <span className={`status-badge ${status.key}`}>{status.label}</span>
             </div>
-            <span className={`status-pill ${o.order_status === 'Confirmed' ? 'confirmed' : o.order_status === 'Delivered' ? 'delivered' : 'pending'}`}>{o.order_status}</span>
-          </div>
-          <div className="order-imgs">
-            {(o.items || []).map((p, i) => <img key={i} src={p.img || p.image_url} alt={p.name} title={p.name} />)}
-          </div>
-          <p>{(o.items || []).map((p) => `${p.name} × ${p.qty}`).join(' • ')}<br /><b>Total ₹{Number(o.total_amount).toLocaleString('en-IN')}</b></p>
-          {!historyOnly && o.order_status === 'Pending' ? (
-            <button className="gold-luxury-btn" onClick={async () => {
-              try {
-                const res = await confirmOrder(o.id);
-                alert(res.message || 'Order confirmed. Customer video call is unlocked.');
-              } catch (err) {
-                alert(err.message);
-              }
-            }}>Confirm Order & Unlock Video Call</button>
-          ) : null}
-          {!historyOnly && o.order_status === 'Confirmed' ? (
-            <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
-              <button className="gold-luxury-btn" onClick={() => setJoinRoom(o.video_room || `RakeshClothStores-${o.order_number}`)}>Join Video Call</button>
-              <button className="outline-gold-btn" onClick={async () => {
-                if (confirm('Mark delivery finished? It moves to All Orders history.')) await finishDelivery(o.id);
-              }}>Delivery Finished</button>
+            <div className="order-imgs">
+              {(o.items || []).map((p, i) => <img key={i} src={p.img || p.image_url} alt={p.name} title={p.name} />)}
             </div>
-          ) : null}
-        </div>
-      ))}
+            <p>{(o.items || []).map((p) => `${p.name} × ${p.qty}`).join(' • ')}<br /><b>Total ₹{Number(o.total_amount).toLocaleString('en-IN')}</b></p>
+            {!historyOnly && o.order_status === 'Pending' ? (
+              <button className="gold-luxury-btn" onClick={async () => {
+                try {
+                  const res = await confirmOrder(o.id);
+                  alert(res.message || 'Order confirmed. The customer can now start a WhatsApp video call.');
+                } catch (err) {
+                  alert(err.message);
+                }
+              }}>Confirm Order</button>
+            ) : null}
+            {!historyOnly && o.order_status === 'Confirmed' ? (
+              <div className="admin-order-actions">
+                <p className="tiny-note" style={{ margin: 0, flex: 1 }}>
+                  WhatsApp video is unlocked for this customer. When they message you, tap the video camera in WhatsApp.
+                </p>
+                <button className="outline-gold-btn" onClick={async () => {
+                  if (confirm('Mark delivery finished? It moves to All Orders history.')) await finishDelivery(o.id);
+                }}>Delivery Finished</button>
+              </div>
+            ) : null}
+          </div>
+        );
+      })}
       {!list.length ? <p style={{ color: 'var(--text-muted)' }}>No matching orders.</p> : null}
     </>
   );
 }
 
 function AddProductTab() {
-  const { saveProduct, editingProduct, setEditingProduct } = useStore();
+  const { saveProduct, editingProduct, setEditingProduct, categories } = useStore();
   const fileRef = useRef(null);
   const [previews, setPreviews] = useState(editingProduct?.images || []);
   const [saving, setSaving] = useState(false);
@@ -253,12 +251,16 @@ function AddProductTab() {
         <div className="form-group"><label>Product Name *</label><input name="name" required defaultValue={editingProduct?.name || ''} /></div>
         <div className="form-group">
           <label>Category</label>
-          <select name="category" defaultValue={editingProduct?.category || 'sarees'}>
-            <option value="sarees">Sarees</option>
-            <option value="pattu">Pattu</option>
-            <option value="lehengas">Lehengas</option>
-            <option value="suiting">Suiting</option>
-            <option value="shirting">Shirting</option>
+          <select name="category" defaultValue={editingProduct?.category || categories[0]?.slug || 'sarees'}>
+            {(categories.length ? categories : [
+              { slug: 'sarees', title: 'Sarees' },
+              { slug: 'pattu', title: 'Pattu' },
+              { slug: 'lehengas', title: 'Lehengas' },
+              { slug: 'suiting', title: 'Suiting' },
+              { slug: 'shirting', title: 'Shirting' },
+            ]).map((cat) => (
+              <option key={cat.slug} value={cat.slug}>{cat.title}</option>
+            ))}
           </select>
         </div>
       </div>
@@ -434,6 +436,133 @@ function PriceRangesTab() {
   );
 }
 
+function CategoriesTab() {
+  const { categories, saveCategory, deleteCategory } = useStore();
+  const [drafts, setDrafts] = useState({});
+  const [savingId, setSavingId] = useState(null);
+  const [newCat, setNewCat] = useState({ title: '', cta: 'EXPLORE →', image_url: '', slug: '' });
+  const newFileRef = useRef(null);
+  const fileRefs = useRef({});
+
+  useEffect(() => {
+    const next = {};
+    categories.forEach((c) => {
+      next[c.id] = { title: c.title, cta: c.cta, image_url: c.image_url, slug: c.slug };
+    });
+    setDrafts(next);
+  }, [categories]);
+
+  const updateDraft = (id, field, value) => {
+    setDrafts((prev) => ({ ...prev, [id]: { ...prev[id], [field]: value } }));
+  };
+
+  const saveRow = async (id) => {
+    const row = drafts[id];
+    if (!row?.title || !row?.image_url) return alert('Category name and image are required.');
+    setSavingId(id);
+    try {
+      await saveCategory({ id, ...row });
+      alert('Category saved. Customers will see it under Shop by Category.');
+    } catch (err) {
+      alert(err.message);
+    } finally {
+      setSavingId(null);
+    }
+  };
+
+  const uploadInto = async (file, setter) => {
+    if (!file) return;
+    try {
+      const data = await uploadFile(file);
+      if (data.success) setter(data.url);
+      else alert(data.error || 'Upload failed');
+    } catch (err) {
+      alert('Upload failed: ' + err.message);
+    }
+  };
+
+  return (
+    <>
+      <p style={{ color: 'var(--text-muted)', fontSize: 13, marginBottom: 16 }}>
+        Change Shop by Category photos from your computer or by pasting an image URL. Title and button text are also editable.
+      </p>
+      {categories.map((cat) => {
+        const row = drafts[cat.id] || cat;
+        return (
+          <div className="admin-category-editor" key={cat.id}>
+            <img src={row.image_url} alt={row.title} />
+            <div>
+              <div className="form-row-2">
+                <div className="form-group"><label>Name</label><input value={row.title || ''} onChange={(e) => updateDraft(cat.id, 'title', e.target.value)} /></div>
+                <div className="form-group"><label>Button text</label><input value={row.cta || ''} onChange={(e) => updateDraft(cat.id, 'cta', e.target.value)} /></div>
+              </div>
+              <div className="form-group">
+                <label>Image URL</label>
+                <input value={row.image_url || ''} onChange={(e) => updateDraft(cat.id, 'image_url', e.target.value)} placeholder="https://... or upload below" />
+              </div>
+              <div className="toolbar-row">
+                <button type="button" className="admin-nav-tab" onClick={() => fileRefs.current[cat.id]?.click()}>Upload from computer</button>
+                <input
+                  type="file"
+                  accept="image/*"
+                  ref={(el) => { fileRefs.current[cat.id] = el; }}
+                  style={{ display: 'none' }}
+                  onChange={(e) => {
+                    const file = e.target.files?.[0];
+                    e.target.value = '';
+                    uploadInto(file, (url) => updateDraft(cat.id, 'image_url', url));
+                  }}
+                />
+                <button type="button" className="gold-luxury-btn" disabled={savingId === cat.id} onClick={() => saveRow(cat.id)}>
+                  {savingId === cat.id ? 'Saving…' : 'Save Category'}
+                </button>
+                <button type="button" className="admin-logout-btn" onClick={async () => {
+                  if (confirm(`Remove ${cat.title} from Shop by Category?`)) await deleteCategory(cat.id);
+                }}>Remove</button>
+              </div>
+            </div>
+          </div>
+        );
+      })}
+
+      <form
+        className="luxury-form"
+        onSubmit={async (e) => {
+          e.preventDefault();
+          if (!newCat.title.trim() || !newCat.image_url.trim()) return alert('Name and image are required.');
+          try {
+            await saveCategory(newCat);
+            setNewCat({ title: '', cta: 'EXPLORE →', image_url: '', slug: '' });
+            alert('New category added.');
+          } catch (err) {
+            alert(err.message);
+          }
+        }}
+      >
+        <h3 style={{ fontFamily: 'var(--font-serif)', color: 'var(--gold-400)' }}>Add Category</h3>
+        <div className="form-row-2">
+          <div className="form-group"><label>Name *</label><input value={newCat.title} onChange={(e) => setNewCat((p) => ({ ...p, title: e.target.value }))} placeholder="Kids Wear" required /></div>
+          <div className="form-group"><label>Button text</label><input value={newCat.cta} onChange={(e) => setNewCat((p) => ({ ...p, cta: e.target.value }))} /></div>
+        </div>
+        <div className="image-upload-dropzone" onClick={() => newFileRef.current?.click()}>
+          <input type="file" ref={newFileRef} accept="image/*" style={{ display: 'none' }} onChange={(e) => {
+            const file = e.target.files?.[0];
+            e.target.value = '';
+            uploadInto(file, (url) => setNewCat((p) => ({ ...p, image_url: url })));
+          }} />
+          <span style={{ color: 'var(--gold-400)' }}>Upload a category photo from your computer</span>
+          {newCat.image_url ? <div className="preview-thumb-box"><img src={newCat.image_url} alt="" /></div> : null}
+        </div>
+        <div className="form-group" style={{ marginTop: 10 }}>
+          <label>Or paste image URL</label>
+          <input value={newCat.image_url} onChange={(e) => setNewCat((p) => ({ ...p, image_url: e.target.value }))} placeholder="https://..." />
+        </div>
+        <button className="gold-luxury-btn" type="submit">Add Category ›</button>
+      </form>
+    </>
+  );
+}
+
 function SettingsTab() {
   const { storeSettings, saveSettings } = useStore();
   return (
@@ -505,6 +634,7 @@ export default function AdminDashboard() {
     ['add', 'Add Product'],
     ['history', 'All Orders'],
     ['hero', 'Hero Slides'],
+    ['categories', 'Categories'],
     ['prices', 'Price Ranges'],
     ['settings', 'Settings'],
   ];
@@ -531,6 +661,7 @@ export default function AdminDashboard() {
           {tab === 'add' && <AddProductTab />}
           {tab === 'history' && <OrdersTab historyOnly />}
           {tab === 'hero' && <HeroTab />}
+          {tab === 'categories' && <CategoriesTab />}
           {tab === 'prices' && <PriceRangesTab />}
           {tab === 'settings' && <SettingsTab />}
         </div>

@@ -18,8 +18,8 @@ export default function App() {
   return (
     <StoreProvider>
       <div className="announcement-bar">
-        <span className="announcement-full">Open every day • 10:00 AM – 8:30 PM • Video call unlocks after the store confirms your order</span>
-        <span className="announcement-short">Open daily 10:00 AM – 8:30 PM • Video after confirm</span>
+        <span className="announcement-full">Open every day • 10:00 AM – 8:30 PM • WhatsApp video after the store confirms your order</span>
+        <span className="announcement-short">Open daily 10:00 AM – 8:30 PM • WhatsApp video after confirm</span>
       </div>
       <Header />
       <MobileDrawer />

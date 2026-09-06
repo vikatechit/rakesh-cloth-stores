@@ -59,7 +59,7 @@ export default function Hero() {
           <p className="hero-kicker">Quality Matters • Kurmannapalem, Vizag</p>
           <p className="hero-lead">
             Designer sarees, pattu silks, lehengas, suiting and shirting — a premium boutique experience
-            with WhatsApp payment and video-call confirmation after your order is confirmed.
+            with WhatsApp payment and WhatsApp video confirmation after your order is confirmed.
           </p>
           <div className="hero-cta-group">
             <button className="gold-luxury-btn" onClick={() => scrollTo('collections')}>

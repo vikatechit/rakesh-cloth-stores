@@ -103,19 +103,18 @@ export function parsePriceTiers(value) {
   return DEFAULT_PRICE_TIERS;
 }
 
-export function isVideoCallHours() {
-  const parts = new Intl.DateTimeFormat('en-GB', {
-    timeZone: 'Asia/Kolkata',
-    hour: '2-digit',
-    minute: '2-digit',
-    hour12: false,
-  }).formatToParts(new Date());
-  const hour = Number(parts.find((p) => p.type === 'hour')?.value || 0);
-  const minute = Number(parts.find((p) => p.type === 'minute')?.value || 0);
-  const t = hour + minute / 60;
-  return t >= 10 && t < 20.5;
+export function orderStatusMeta(status) {
+  const key = String(status || 'Pending').trim().toLowerCase();
+  if (key === 'confirmed') return { key: 'confirmed', label: 'Confirmed' };
+  if (key === 'delivered') return { key: 'delivered', label: 'Delivered' };
+  if (key === 'cancelled') return { key: 'cancelled', label: 'Cancelled' };
+  return { key: 'pending', label: 'Pending' };
 }
 
-export function jitsiUrl(room) {
-  return `https://meet.jit.si/${encodeURIComponent(room || 'RakeshClothStores')}`;
+export function slugifyCategory(value) {
+  return String(value || '')
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '') || 'category';
 }

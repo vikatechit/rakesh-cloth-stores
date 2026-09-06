@@ -10,6 +10,7 @@ import {
   getAdminToken,
   parsePriceTiers,
   setAdminToken,
+  slugifyCategory,
   uploadFile,
 } from '../api/client';
 
@@ -272,6 +273,25 @@ export function StoreProvider({ children }) {
     window.open(`https://wa.me/${num}?text=${encodeURIComponent(msg)}`, '_blank');
   }, [lastCreatedOrder, viewingOrder, storeSettings.whatsapp_number]);
 
+  const openWhatsAppVideoCall = useCallback((order) => {
+    if (!order || order.order_status !== 'Confirmed') {
+      alert('WhatsApp video call opens only after the store confirms your order.');
+      return;
+    }
+    const num = storeSettings.whatsapp_number || DEFAULT_SETTINGS.whatsapp_number;
+    const itemsText = (order.items || []).map((i) => `• ${i.name} × ${i.qty}`).join('\n');
+    const msg =
+      `Hello Rakesh Cloth Stores,\n\n` +
+      `My order is confirmed. Please start a *WhatsApp video call* so I can see the product live.\n\n` +
+      `Bill: ${order.bill_no || order.order_number}\n` +
+      `Order: ${order.order_number}\n` +
+      `Customer: ${order.customer_name}\n` +
+      `Mobile: ${order.mobile}\n\n` +
+      `Items:\n${itemsText}\n\n` +
+      `Thank you.`;
+    window.open(`https://wa.me/${num}?text=${encodeURIComponent(msg)}`, '_blank');
+  }, [storeSettings.whatsapp_number]);
+
   const lookupCustomerOrders = useCallback(async (mobile) => {
     try {
       const data = await apiPost('/api/orders/lookup', { mobile });
@@ -406,6 +426,32 @@ export function StoreProvider({ children }) {
     [fetchHero]
   );
 
+  const saveCategory = useCallback(
+    async (payload) => {
+      const body = {
+        title: payload.title,
+        cta: payload.cta,
+        image_url: payload.image_url,
+        slug: payload.slug || slugifyCategory(payload.title),
+        sort_order: payload.sort_order,
+      };
+      const data = payload.id
+        ? await apiPut(`/api/categories/${payload.id}`, body, { auth: true })
+        : await apiPost('/api/categories', body, { auth: true });
+      await fetchCategories();
+      return data;
+    },
+    [fetchCategories]
+  );
+
+  const deleteCategory = useCallback(
+    async (id) => {
+      await apiDelete(`/api/categories/${id}`, { auth: true });
+      await fetchCategories();
+    },
+    [fetchCategories]
+  );
+
   const saveSettings = useCallback(
     async (payload) => {
       const data = await apiPut('/api/admin/settings', payload, { auth: true });
@@ -464,6 +510,7 @@ export function StoreProvider({ children }) {
     placeOrderStart,
     handleCheckoutSubmit,
     sendWhatsAppReceipt,
+    openWhatsAppVideoCall,
     lookupCustomerOrders,
     handleReviewSubmit,
     handleReviewMediaUpload,
@@ -483,6 +530,9 @@ export function StoreProvider({ children }) {
     editingProduct,
     setEditingProduct,
     saveSettings,
+    saveCategory,
+    deleteCategory,
+    fetchCategories,
     fetchProducts,
     fetchHero,
     fetchReviews,

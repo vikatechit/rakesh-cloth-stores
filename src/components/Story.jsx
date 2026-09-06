@@ -36,8 +36,8 @@ export default function Story() {
           <p>Rakesh Cloth Stores presents every saree with large photos, clear stock and a simple price range so families can shop with confidence.</p>
         </div>
         <div className="story-card dark-crest-card">
-          <h3>Confirmed Video Call</h3>
-          <p>After the store confirms your order, a private video room unlocks between 10:00 AM and 8:30 PM so you can see the piece live before dispatch.</p>
+          <h3>WhatsApp Video Call</h3>
+          <p>After the store confirms your order, tap Video Call on WhatsApp. The shop starts a WhatsApp video call so you can see the piece live before dispatch.</p>
         </div>
         <div className="story-card atelier-card">
           <h3>Kurmannapalem Atelier</h3>

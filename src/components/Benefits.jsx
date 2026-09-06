@@ -1,7 +1,7 @@
 export default function Benefits() {
   const items = [
     { title: 'PREMIUM QUALITY', desc: 'Sarees, pattu & lehengas' },
-    { title: 'VIDEO CALL CONFIRM', desc: 'After store confirmation' },
+    { title: 'WHATSAPP VIDEO', desc: 'After store confirmation' },
     { title: 'VIZAG DELIVERY', desc: 'Often within 1 day' },
     { title: 'SIMPLE PRICE RANGES', desc: 'No complicated filters' },
     { title: 'SECURE PACKING', desc: 'Ready for courier' },

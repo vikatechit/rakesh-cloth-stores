@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from 'react';
-import { isVideoCallHours, jitsiUrl } from '../api/client';
+import { orderStatusMeta } from '../api/client';
 import { useStore } from '../context/StoreContext';
 
 function ModalOverlay({ active, onClose, children, cardClass = 'modal-md' }) {
@@ -11,13 +11,6 @@ function ModalOverlay({ active, onClose, children, cardClass = 'modal-md' }) {
       </div>
     </div>
   );
-}
-
-function statusClass(status) {
-  if (status === 'Confirmed') return 'confirmed';
-  if (status === 'Delivered') return 'delivered';
-  if (status === 'Cancelled') return 'cancelled';
-  return 'pending';
 }
 
 export default function Modals() {
@@ -34,6 +27,7 @@ export default function Modals() {
     handleCheckoutSubmit,
     lastCreatedOrder,
     sendWhatsAppReceipt,
+    openWhatsAppVideoCall,
     lookupCustomerOrders,
     handleReviewSubmit,
     handleReviewMediaUpload,
@@ -46,7 +40,6 @@ export default function Modals() {
   const [lookupMobile, setLookupMobile] = useState('');
   const [lookupOrders, setLookupOrders] = useState(null);
   const [reviewMedia, setReviewMedia] = useState({ url: '', isVideo: false, preview: '' });
-  const [videoOpen, setVideoOpen] = useState(false);
   const reviewFileRef = useRef(null);
 
   useEffect(() => {
@@ -65,17 +58,7 @@ export default function Modals() {
   const gallery = product?.images?.length ? product.images : product?.image_url ? [product.image_url] : [];
   const order = viewingOrder || lastCreatedOrder;
   const confirmed = order?.order_status === 'Confirmed';
-  const callOpen = confirmed && isVideoCallHours();
-  const room = order?.video_room || (order ? `RakeshClothStores-${order.order_number}` : '');
-
-  const startVideo = () => {
-    if (!confirmed) return;
-    if (!isVideoCallHours()) {
-      alert('Video call is available only between 10:00 AM and 8:30 PM.');
-      return;
-    }
-    setVideoOpen(true);
-  };
+  const orderStatus = orderStatusMeta(order?.order_status);
 
   return (
     <>
@@ -106,7 +89,7 @@ export default function Modals() {
                 <li><strong>Fabric:</strong> {product.fabric || 'Boutique selected'}</li>
                 <li><strong>Stock:</strong> {product.stock > 0 ? `${product.stock} available` : 'Sold out'}</li>
                 <li><strong>Vizag delivery:</strong> Often within 1 day</li>
-                <li><strong>Video call:</strong> Unlocks after store confirmation, 10:00 AM–8:30 PM</li>
+                <li><strong>WhatsApp video:</strong> Unlocks after the store confirms your order</li>
               </ul>
               <div style={{ display: 'flex', gap: 12, flexDirection: 'column' }}>
                 <button className="gold-luxury-btn btn-full" onClick={() => addToCartDirect(product.id)} disabled={product.stock <= 0}>
@@ -198,11 +181,11 @@ export default function Modals() {
           <div className="order-receipt-box">
             <p><strong>Bill:</strong> {lastCreatedOrder.bill_no}</p>
             <p><strong>Order:</strong> {lastCreatedOrder.order_number}</p>
-            <p><strong>Status:</strong> {lastCreatedOrder.order_status}</p>
+            <p><strong>Status:</strong> {orderStatusMeta(lastCreatedOrder.order_status).label}</p>
             <p><strong>Total:</strong> ₹{Number(lastCreatedOrder.total_amount).toLocaleString('en-IN')}</p>
           </div>
         ) : null}
-        <p className="success-note">Video call stays locked until Rakesh Cloth Stores confirms this order. Then open My Orders between 10:00 AM and 8:30 PM.</p>
+        <p className="success-note">WhatsApp video call stays locked until Rakesh Cloth Stores confirms this order. Then open My Orders and tap Video Call on WhatsApp.</p>
         <div className="modal-actions-row">
           <button className="gold-luxury-btn" onClick={sendWhatsAppReceipt}>CONFIRM ON WHATSAPP</button>
           <button
@@ -218,17 +201,17 @@ export default function Modals() {
         </div>
       </ModalOverlay>
 
-      <ModalOverlay active={modals.orderModal} onClose={() => { closeModal('orderModal'); setVideoOpen(false); }}>
-        <button className="modal-close-icon" onClick={() => { closeModal('orderModal'); setVideoOpen(false); }}>✕</button>
+      <ModalOverlay active={modals.orderModal} onClose={() => closeModal('orderModal')}>
+        <button className="modal-close-icon" onClick={() => closeModal('orderModal')}>✕</button>
         {order ? (
           <>
             <div className="modal-header-banner">
               <h2>My Order</h2>
               <p>Bill {order.bill_no} • {order.order_number}</p>
             </div>
-            <div className={`rks-status-banner ${statusClass(order.order_status)}`}>
-              Current status: <b>{order.order_status}</b>
-              {confirmed ? ' — store confirmed. Video call is unlocked during shop hours.' : ' — waiting for store confirmation.'}
+            <div className={`rks-status-banner ${orderStatus.key}`}>
+              Current status: <span className={`status-badge ${orderStatus.key}`}>{orderStatus.label}</span>
+              {confirmed ? ' — store confirmed. WhatsApp video call is now available.' : ' — waiting for store confirmation.'}
             </div>
             <div className="rks-order-items">
               {(order.items || []).map((p, i) => (
@@ -238,24 +221,17 @@ export default function Modals() {
                 </div>
               ))}
             </div>
-            {videoOpen && callOpen ? (
-              <div className="rks-video-stage">
-                <iframe
-                  title="Rakesh Cloth Stores video call"
-                  src={`${jitsiUrl(room)}#config.prejoinPageEnabled=true`}
-                  allow="camera; microphone; fullscreen; display-capture; autoplay"
-                  allowFullScreen
-                />
-              </div>
-            ) : (
-              <button className={`gold-luxury-btn btn-full${confirmed ? '' : ' locked-btn'}`} disabled={!confirmed} onClick={startVideo}>
-                {confirmed ? 'Start Video Call' : 'Video Call — Waiting for Confirmation'}
-              </button>
-            )}
+            <button
+              className={`gold-luxury-btn btn-full${confirmed ? '' : ' locked-btn'}`}
+              disabled={!confirmed}
+              onClick={() => openWhatsAppVideoCall(order)}
+            >
+              {confirmed ? 'Video Call on WhatsApp ›' : 'Video Call — Waiting for Confirmation'}
+            </button>
             <button className="outline-gold-btn btn-full" style={{ marginTop: 10 }} onClick={sendWhatsAppReceipt}>
               WhatsApp Order Status
             </button>
-            <p className="tiny-note">The call button works only after confirmation, and only from 10:00 AM to 8:30 PM. The store joins the same private room.</p>
+            <p className="tiny-note">After the store confirms, tap Video Call on WhatsApp. Then tap the video camera in WhatsApp to see the product live. Best during shop hours 10:00 AM – 8:30 PM.</p>
           </>
         ) : null}
       </ModalOverlay>
@@ -282,9 +258,9 @@ export default function Modals() {
               <p style={{ color: 'var(--text-muted)', textAlign: 'center' }}>No orders found for this number.</p>
             ) : lookupOrders.map((o) => (
               <div className="customer-order" key={o.id}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', gap: 8 }}>
+                <div className="admin-order-head" style={{ marginBottom: 6 }}>
                   <b>{o.bill_no}</b>
-                  <span className={`status-pill ${statusClass(o.order_status)}`}>{o.order_status}</span>
+                  <span className={`status-badge ${orderStatusMeta(o.order_status).key}`}>{orderStatusMeta(o.order_status).label}</span>
                 </div>
                 <div className="tiny-note">{new Date(o.created_at).toLocaleString('en-IN')}</div>
                 {(o.items || []).map((p, i) => (
@@ -298,7 +274,6 @@ export default function Modals() {
                   style={{ marginTop: 10 }}
                   onClick={() => {
                     setViewingOrder(o);
-                    setVideoOpen(false);
                     closeModal('accountModal');
                     openModal('orderModal');
                   }}

@@ -1,7 +1,7 @@
 import { useStore } from '../context/StoreContext';
 
 export default function Header() {
-  const { cartCount, openCart, openModal, setMobileDrawerOpen, storeSettings, filterCategory } = useStore();
+  const { cartCount, openCart, openModal, setMobileDrawerOpen, storeSettings, filterCategory, categories } = useStore();
   const logo = storeSettings.logo_url || '/logo.png';
 
   const shopCategory = (cat) => {
@@ -20,11 +20,9 @@ export default function Header() {
           <div className="nav-dropdown-wrapper">
             <a href="#categories" className="nav-link">SHOP <span className="dropdown-arrow">▾</span></a>
             <div className="nav-dropdown-menu">
-              <a href="#categories" onClick={() => shopCategory('sarees')}>Designer Sarees</a>
-              <a href="#categories" onClick={() => shopCategory('pattu')}>Pattu Sarees</a>
-              <a href="#categories" onClick={() => shopCategory('lehengas')}>Lehengas</a>
-              <a href="#categories" onClick={() => shopCategory('suiting')}>Suiting</a>
-              <a href="#categories" onClick={() => shopCategory('shirting')}>Shirting</a>
+              {categories.map((cat) => (
+                <a key={cat.id} href="#categories" onClick={() => shopCategory(cat.slug)}>{cat.title}</a>
+              ))}
             </div>
           </div>
           <a href="#collections" className="nav-link">COLLECTIONS</a>

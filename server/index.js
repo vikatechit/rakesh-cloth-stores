@@ -1,6 +1,6 @@
 /**
  * Rakesh Cloth Stores — production Express server
- * Permanent SQLite storage, JWT admin auth, real image uploads, video-call rooms.
+ * Permanent SQLite storage, JWT admin auth, real image uploads, WhatsApp order flow.
  */
 require('dotenv').config({ path: require('path').join(__dirname, '../.env') });
 
@@ -102,8 +102,12 @@ function mapOrder(r) {
   };
 }
 
-function videoRoomFor(orderNumber) {
-  return `RakeshClothStores-${String(orderNumber).replace(/[^a-zA-Z0-9]/g, '')}`;
+function slugifyCategory(value) {
+  return String(value || '')
+    .toLowerCase()
+    .trim()
+    .replace(/[^a-z0-9]+/g, '-')
+    .replace(/^-+|-+$/g, '') || 'category';
 }
 
 // Auth
@@ -295,6 +299,26 @@ app.get('/api/categories', (_req, res) => {
   }
 });
 
+app.post('/api/categories', authenticateAdmin, (req, res) => {
+  try {
+    const { title, cta, image_url, slug, sort_order } = req.body || {};
+    if (!title || !image_url) {
+      return res.status(400).json({ success: false, error: 'Category name and image are required.' });
+    }
+    const existing = db.prepare('SELECT slug FROM categories').all().map((row) => row.slug);
+    let unique = slugifyCategory(slug || title);
+    let n = 2;
+    while (existing.includes(unique)) unique = `${slugifyCategory(slug || title)}-${n++}`;
+    const maxSort = db.prepare('SELECT COALESCE(MAX(sort_order), 0) as m FROM categories').get().m;
+    const info = db.prepare(
+      'INSERT INTO categories (slug, title, cta, image_url, sort_order) VALUES (?, ?, ?, ?, ?)'
+    ).run(unique, title.trim(), String(cta || 'EXPLORE →').trim(), image_url, Number(sort_order) || maxSort + 1);
+    res.json({ success: true, category: db.prepare('SELECT * FROM categories WHERE id = ?').get(Number(info.lastInsertRowid)) });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
 app.put('/api/categories/:id', authenticateAdmin, (req, res) => {
   try {
     const { title, cta, image_url, sort_order } = req.body || {};
@@ -303,10 +327,20 @@ app.put('/api/categories/:id', authenticateAdmin, (req, res) => {
         title = COALESCE(?, title),
         cta = COALESCE(?, cta),
         image_url = COALESCE(?, image_url),
-        sort_order = COALESCE(?, sort_order)
+        sort_order = COALESCE(?, sort_order),
+        updated_at = CURRENT_TIMESTAMP
       WHERE id = ?
-    `).run(title, cta, image_url, sort_order, req.params.id);
+    `).run(title || null, cta || null, image_url || null, sort_order ?? null, req.params.id);
     res.json({ success: true, category: db.prepare('SELECT * FROM categories WHERE id = ?').get(req.params.id) });
+  } catch (err) {
+    res.status(500).json({ success: false, error: err.message });
+  }
+});
+
+app.delete('/api/categories/:id', authenticateAdmin, (req, res) => {
+  try {
+    db.prepare('UPDATE categories SET active = 0, updated_at = CURRENT_TIMESTAMP WHERE id = ?').run(req.params.id);
+    res.json({ success: true });
   } catch (err) {
     res.status(500).json({ success: false, error: err.message });
   }
@@ -431,8 +465,8 @@ app.post('/api/orders', (req, res) => {
     const info = db.prepare(`
       INSERT INTO orders (
         order_number, bill_no, customer_name, mobile, address, city, pincode,
-        payment_method, payment_status, order_status, total_amount, notes, items, video_room
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        payment_method, payment_status, order_status, total_amount, notes, items
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
     `).run(
       orderNumber,
       billNo,
@@ -446,8 +480,7 @@ app.post('/api/orders', (req, res) => {
       'Pending',
       calculatedTotal,
       notes || '',
-      JSON.stringify(validatedItems),
-      videoRoomFor(orderNumber)
+      JSON.stringify(validatedItems)
     );
 
     const created = mapOrder(db.prepare('SELECT * FROM orders WHERE id = ?').get(Number(info.lastInsertRowid)));
@@ -502,10 +535,9 @@ app.patch('/api/admin/orders/:id/status', authenticateAdmin, (req, res) => {
             order_status = 'Confirmed',
             stock_deducted = 1,
             confirmed_at = CURRENT_TIMESTAMP,
-            video_room = COALESCE(video_room, ?),
             updated_at = CURRENT_TIMESTAMP
           WHERE id = ?
-        `).run(videoRoomFor(order.order_number), order.id);
+        `).run(order.id);
         db.exec('COMMIT');
       } catch (err) {
         db.exec('ROLLBACK');
@@ -540,7 +572,7 @@ app.patch('/api/admin/orders/:id/status', authenticateAdmin, (req, res) => {
       success: true,
       order: updated,
       message: nextStatus === 'Confirmed'
-        ? 'Order confirmed. Stock reduced and customer video call is unlocked.'
+        ? 'Order confirmed. The customer can now start a WhatsApp video call.'
         : 'Order updated.',
     });
   } catch (err) {

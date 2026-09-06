@@ -2671,6 +2671,20 @@ button, input, select, textarea {
   .form-row-2 {
     grid-template-columns: 1fr;
   }
+  .admin-category-editor {
+    grid-template-columns: 1fr;
+  }
+  .admin-category-editor img {
+    width: 100%;
+    height: 180px;
+  }
+  .admin-order-head {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .admin-order-head .status-badge {
+    align-self: flex-end;
+  }
   .accordion-gallery,
   .hero-text-content .accordion-gallery {
     flex-direction: column;
@@ -2967,11 +2981,16 @@ button, input, select, textarea {
   border-radius: 10px;
   margin: 12px 0;
   font-size: 13px;
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 10px;
 }
 
 .rks-status-banner.pending { background: rgba(250, 204, 21, 0.12); color: #fde68a; }
 .rks-status-banner.confirmed { background: rgba(34, 197, 94, 0.12); color: #86efac; }
 .rks-status-banner.delivered { background: rgba(59, 130, 246, 0.12); color: #93c5fd; }
+.rks-status-banner.cancelled { background: rgba(239, 68, 68, 0.12); color: #fca5a5; }
 
 .mini-product {
   display: flex;
@@ -2996,18 +3015,34 @@ button, input, select, textarea {
   background: var(--forest-800);
 }
 
+.status-badge,
 .status-pill {
-  display: inline-block;
-  padding: 5px 9px;
-  border-radius: 999px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 108px;
+  height: 32px;
+  padding: 0 12px;
+  border-radius: 4px;
   font-size: 11px;
   font-weight: 800;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  white-space: nowrap;
+  flex-shrink: 0;
+  box-sizing: border-box;
+  text-align: center;
+  line-height: 1;
 }
 
-.status-pill.pending { background: #fff7dd; color: #9b6a00; }
-.status-pill.confirmed { background: #eaf8f0; color: #087443; }
-.status-pill.delivered { background: #e9f0ff; color: #315aa8; }
-.status-pill.cancelled { background: #fee2e2; color: #991b1b; }
+.status-badge.pending,
+.status-pill.pending { background: #fff7dd; color: #9b6a00; border: 1px solid #e8c56b; }
+.status-badge.confirmed,
+.status-pill.confirmed { background: #eaf8f0; color: #087443; border: 1px solid #86d4a8; }
+.status-badge.delivered,
+.status-pill.delivered { background: #e9f0ff; color: #315aa8; border: 1px solid #93b4f0; }
+.status-badge.cancelled,
+.status-pill.cancelled { background: #fee2e2; color: #991b1b; border: 1px solid #f0a0a0; }
 
 .locked-btn {
   background: #374151 !important;
@@ -3052,6 +3087,42 @@ button, input, select, textarea {
   border-radius: 12px;
   padding: 16px;
   margin-bottom: 14px;
+}
+
+.admin-order-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-start;
+  gap: 14px;
+}
+
+.admin-order-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 8px;
+}
+
+.admin-category-editor {
+  display: grid;
+  grid-template-columns: 120px minmax(0, 1fr);
+  gap: 16px;
+  align-items: start;
+  background: var(--forest-800);
+  border: 1px solid var(--border-gold);
+  border-radius: 12px;
+  padding: 14px;
+  margin-bottom: 14px;
+}
+
+.admin-category-editor img {
+  width: 120px;
+  height: 150px;
+  object-fit: cover;
+  border-radius: 8px;
+  border: 1px solid var(--border-gold);
+  background: #02120c;
 }
 
 .order-imgs {

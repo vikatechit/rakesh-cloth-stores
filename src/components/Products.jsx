@@ -1,16 +1,8 @@
 import { useStore } from '../context/StoreContext';
 
-const CATEGORY_PILLS = [
-  { id: 'all', label: 'All Items' },
-  { id: 'sarees', label: 'Sarees' },
-  { id: 'pattu', label: 'Pattu' },
-  { id: 'lehengas', label: 'Lehengas' },
-  { id: 'suiting', label: 'Suiting' },
-  { id: 'shirting', label: 'Shirting' },
-];
-
 export default function Products() {
   const {
+    categories,
     filteredProducts,
     activeCategory,
     activePriceTier,
@@ -23,6 +15,11 @@ export default function Products() {
     addToCartDirect,
   } = useStore();
 
+  const categoryPills = [
+    { id: 'all', label: 'All Items' },
+    ...categories.map((cat) => ({ id: cat.slug, label: cat.title })),
+  ];
+
   return (
     <section className="section-container" id="collections">
       <div className="section-title-block">
@@ -33,7 +30,7 @@ export default function Products() {
 
       <div className="filter-controls-bar">
         <div className="category-filter-pills">
-          {CATEGORY_PILLS.map((pill) => (
+          {categoryPills.map((pill) => (
             <button
               key={pill.id}
               className={`pill-btn${activeCategory === pill.id ? ' active' : ''}`}
