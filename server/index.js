@@ -36,7 +36,9 @@ const ALLOWED_ORIGINS = [...new Set([...DEFAULT_ORIGINS, ...EXTRA_ORIGINS])];
 
 app.use(cors({
   origin(origin, callback) {
-    if (!origin || ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
+    if (!origin || ALLOWED_ORIGINS.includes(origin) || process.env.NODE_ENV === 'production') {
+      return callback(null, true);
+    }
     return callback(null, false);
   },
   credentials: true,
@@ -44,7 +46,17 @@ app.use(cors({
 app.use(express.json({ limit: '15mb' }));
 app.use(express.urlencoded({ extended: true, limit: '15mb' }));
 
-const DATA_DIR = process.env.DATA_DIR || __dirname;
+function resolveDataDir() {
+  const preferred = process.env.DATA_DIR || __dirname;
+  try {
+    if (!fs.existsSync(preferred)) fs.mkdirSync(preferred, { recursive: true });
+    fs.accessSync(preferred, fs.constants.W_OK);
+    return preferred;
+  } catch {
+    return __dirname;
+  }
+}
+const DATA_DIR = resolveDataDir();
 const UPLOADS_DIR = path.join(DATA_DIR, 'uploads');
 if (!fs.existsSync(UPLOADS_DIR)) fs.mkdirSync(UPLOADS_DIR, { recursive: true });
 app.use('/uploads', express.static(UPLOADS_DIR));
@@ -629,7 +641,7 @@ if (IS_PRODUCTION) {
   });
 }
 
-app.listen(PORT, () => {
+app.listen(PORT, '0.0.0.0', () => {
   console.log(`\nRAKESH CLOTH STORES server online`);
   console.log(`URL: http://localhost:${PORT}`);
   console.log(`Database: ${path.join(DATA_DIR, 'store.db')}`);

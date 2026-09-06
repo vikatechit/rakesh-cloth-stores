@@ -6,8 +6,19 @@ const path = require('path');
 const fs = require('fs');
 const bcrypt = require('bcryptjs');
 
-const DATA_DIR = process.env.DATA_DIR || __dirname;
-if (!fs.existsSync(DATA_DIR)) fs.mkdirSync(DATA_DIR, { recursive: true });
+function resolveDataDir() {
+  const preferred = process.env.DATA_DIR || __dirname;
+  try {
+    if (!fs.existsSync(preferred)) fs.mkdirSync(preferred, { recursive: true });
+    fs.accessSync(preferred, fs.constants.W_OK);
+    return preferred;
+  } catch {
+    if (!fs.existsSync(__dirname)) fs.mkdirSync(__dirname, { recursive: true });
+    return __dirname;
+  }
+}
+
+const DATA_DIR = resolveDataDir();
 const DB_PATH = path.join(DATA_DIR, 'store.db');
 const db = new DatabaseSync(DB_PATH);
 
