@@ -1,11 +1,12 @@
-# Rakesh Cloth Stores — GitHub + Render (no Hostinger)
+# Rakesh Cloth Stores — GitHub + Render (free web service)
+# Frontend + API + SQLite on one Node service. No Hostinger.
 
 services:
   - type: web
     name: rakesh-cloth-stores
     runtime: node
-    plan: starter
-    region: singapore
+    plan: free
+    region: oregon
     buildCommand: npm install && npm run build
     startCommand: npm start
     healthCheckPath: /api/settings
@@ -16,11 +17,3 @@ services:
         value: "22"
       - key: JWT_SECRET
         generateValue: true
-      - key: DATA_DIR
-        value: /var/data
-      - key: CORS_ORIGINS
-        sync: false
-    disk:
-      name: rakesh-data
-      mountPath: /var/data
-      sizeGB: 1

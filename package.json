@@ -13,6 +13,7 @@
     "build": "vite build",
     "preview": "vite preview",
     "start": "node server/index.js",
+    "test": "node -e \"console.log('ok')\"",
     "zip:hostinger": "node scripts/zip-hostinger.cjs"
   },
   "dependencies": {
