@@ -1,8 +1,18 @@
 import { useEffect, useRef } from 'react';
 import { useStore } from '../context/StoreContext';
 
+function phoneFromSettings(whatsappNumber) {
+  const digits = String(whatsappNumber || '9985728175').replace(/\D/g, '');
+  const ten = (digits.slice(-10) || '9985728175');
+  return {
+    display: `${ten.slice(0, 5)} ${ten.slice(5)}`,
+    tel: `+91${ten}`,
+  };
+}
+
 export default function Hero() {
-  const { heroSlides } = useStore();
+  const { heroSlides, storeSettings } = useStore();
+  const phone = phoneFromSettings(storeSettings.whatsapp_number);
   const rootRef = useRef(null);
 
   useEffect(() => {
@@ -47,16 +57,17 @@ export default function Hero() {
       <div className="hero-backdrop-gradient" />
       <div className="hero-inner-container">
         <div className="hero-text-content">
+          <h1 className="hero-headline-single">
+            RAKESH<br />
+            <span className="hero-gold-gradient-text">CLOTH STORES</span>
+          </h1>
           <div className="hero-ornament-top">
             <span className="ornament-line" />
             <span className="ornament-diamond">✦</span>
             <span className="ornament-line" />
           </div>
-          <h1 className="hero-headline-single">
-            RAKESH<br />
-            <span className="hero-gold-gradient-text">CLOTH STORES</span>
-          </h1>
-          <p className="hero-kicker">Quality Matters • Kurmannapalem, Vizag</p>
+          <p className="hero-kicker">Quality Matters</p>
+          <p className="hero-address">Kurmannapalem, Visakhapatnam</p>
           <p className="hero-lead">
             Designer sarees, pattu silks, lehengas, suiting and shirting — a premium boutique experience
             with WhatsApp payment and WhatsApp video confirmation after your order is confirmed.
@@ -104,6 +115,14 @@ export default function Hero() {
             </div>
           ) : null}
         </div>
+        <a className="hero-phone" href={`tel:${phone.tel}`} aria-label={`Call ${phone.display}`}>
+          <span className="hero-phone-icon" aria-hidden="true">
+            <svg viewBox="0 0 24 24" width="42" height="42" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72c.13.96.36 1.9.7 2.81a2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45c.91.34 1.85.57 2.81.7A2 2 0 0 1 22 16.92z" />
+            </svg>
+          </span>
+          <span className="hero-phone-number">{phone.display}</span>
+        </a>
       </div>
     </section>
   );
