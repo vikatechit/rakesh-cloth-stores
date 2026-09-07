@@ -2774,14 +2774,15 @@ button, input, select, textarea {
 
 .hero-phone {
   display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  justify-content: flex-start;
-  gap: 10px;
+  flex-direction: row;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 14px;
   flex-shrink: 0;
   padding: 18px 8px 0 0;
   color: var(--gold-400);
   text-shadow: 0 4px 18px rgba(0, 0, 0, 0.75);
+  white-space: nowrap;
 }
 
 .hero-phone:hover {
@@ -2790,14 +2791,15 @@ button, input, select, textarea {
 
 .hero-phone-icon {
   display: flex;
-  width: 64px;
-  height: 64px;
+  width: 52px;
+  height: 52px;
   align-items: center;
   justify-content: center;
   border: 1.5px solid var(--gold-500);
   border-radius: 50%;
   background: rgba(4, 28, 20, 0.45);
   color: var(--gold-400);
+  flex-shrink: 0;
 }
 
 .hero-phone-number {
