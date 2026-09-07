@@ -63,10 +63,9 @@ export default function Hero() {
           </h1>
           <div className="hero-ornament-top">
             <span className="ornament-line" />
-            <span className="ornament-diamond">✦</span>
+            <span className="hero-kicker">Quality Matters</span>
             <span className="ornament-line" />
           </div>
-          <p className="hero-kicker">Quality Matters</p>
           <p className="hero-address">Kurmannapalem, Visakhapatnam</p>
           <p className="hero-lead">
             Designer sarees, pattu silks, lehengas, suiting and shirting — a premium boutique experience

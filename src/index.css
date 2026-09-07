@@ -445,18 +445,15 @@ button, input, select, textarea {
   display: flex;
   align-items: center;
   gap: 12px;
-  margin: 0 0 14px;
+  margin: 0 0 10px;
+  max-width: 420px;
 }
 
 .ornament-line {
   height: 1px;
-  width: 45px;
+  flex: 1;
+  min-width: 28px;
   background: var(--gold-gradient);
-}
-
-.ornament-diamond {
-  color: var(--gold-400);
-  font-size: 13px;
 }
 
 .hero-gold-gradient-text {
@@ -2754,12 +2751,13 @@ button, input, select, textarea {
 }
 
 .hero-kicker {
-  font-size: 22px;
-  letter-spacing: 2px;
+  font-size: 20px;
+  letter-spacing: 1.6px;
   text-transform: none;
   color: var(--gold-400);
   font-weight: 700;
-  margin: 0 0 6px;
+  margin: 0;
+  white-space: nowrap;
   font-family: var(--font-display);
 }
 
@@ -3294,9 +3292,9 @@ button, input, select, textarea {
   }
 
   .hero-kicker {
-    font-size: 18px;
+    font-size: 16px;
     letter-spacing: 1px;
-    margin-bottom: 4px;
+    margin: 0;
   }
 
   .hero-address {
