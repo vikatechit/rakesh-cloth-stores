@@ -80,6 +80,17 @@ export async function uploadFile(file, { publicUpload = false } = {}) {
   return parseJson(res);
 }
 
+export function openExternalUrl(url) {
+  if (!url) return;
+  const a = document.createElement('a');
+  a.href = url;
+  a.target = '_blank';
+  a.rel = 'noopener noreferrer';
+  document.body.appendChild(a);
+  a.click();
+  a.remove();
+}
+
 export const ALL_PRICE_TIER = { id: 'all', title: 'All Prices', desc: 'Full catalogue', min: 0, max: 999999 };
 
 export const DEFAULT_PRICE_TIERS = [

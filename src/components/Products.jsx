@@ -42,14 +42,15 @@ export default function Products() {
         </div>
         <div className="price-tier-row">
           {priceTiers.map((t) => (
-            <div
+            <button
+              type="button"
               key={t.id}
               className={`price-tier-btn${activePriceTier === t.id ? ' active' : ''}`}
               onClick={() => setPriceTier(t.id)}
             >
               <strong>{t.title}</strong>
               <span>{t.desc}</span>
-            </div>
+            </button>
           ))}
         </div>
       </div>
@@ -83,12 +84,12 @@ export default function Products() {
                 <div className={`product-badge-flag${isLowStock ? ' product-badge-low' : ''}`}>
                   {isOutOfStock ? 'SOLD OUT' : isLowStock ? 'FEW LEFT' : p.badge || 'NEW'}
                 </div>
-                <div className="product-img-wrapper" onClick={() => openProductDetail(p.id)}>
+                <button type="button" className="product-img-wrapper" onClick={() => openProductDetail(p.id)}>
                   <img src={p.image_url} alt={p.name} loading="lazy" />
-                  <div className="product-quickview-overlay">
-                    <button className="quickview-btn">VIEW DETAILS ›</button>
-                  </div>
-                </div>
+                  <span className="product-quickview-overlay">
+                    <span className="quickview-btn">VIEW DETAILS ›</span>
+                  </span>
+                </button>
                 <div className="product-details-body">
                   <span className="product-category-tag">{p.category}</span>
                   <h3 className="product-title" onClick={() => openProductDetail(p.id)} style={{ cursor: 'pointer' }}>

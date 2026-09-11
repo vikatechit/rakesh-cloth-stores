@@ -12,7 +12,7 @@ export default function Categories() {
       </div>
       <div className="category-cards-grid rks-category-grid">
         {categories.map((cat) => (
-          <div key={cat.id} className="category-card" onClick={() => filterCategory(cat.slug)}>
+          <button type="button" key={cat.id} className="category-card" onClick={() => filterCategory(cat.slug)}>
             <div className="category-img-holder">
               <img src={cat.image_url} alt={`${cat.title} Collection`} loading="lazy" />
               <div className="category-overlay-gradient" />
@@ -21,7 +21,7 @@ export default function Categories() {
               <h3>{cat.title}</h3>
               <span className="category-cta-link">{cat.cta}</span>
             </div>
-          </div>
+          </button>
         ))}
       </div>
     </section>

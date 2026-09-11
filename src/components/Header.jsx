@@ -32,13 +32,13 @@ export default function Header() {
         </nav>
 
         <div className="header-action-group">
-          <button className="action-icon-btn" aria-label="Track order" title="My Orders" onClick={() => openModal('accountModal')}>
+          <button type="button" className="action-icon-btn" aria-label="Track order" title="My Orders" onClick={() => openModal('accountModal')}>
             <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" strokeWidth="2" fill="none">
               <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2" />
               <circle cx="12" cy="7" r="4" />
             </svg>
           </button>
-          <button className="cart-trigger-btn" aria-label="Shopping bag" onClick={openCart}>
+          <button type="button" className="cart-trigger-btn" aria-label="Shopping bag" onClick={openCart}>
             <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" strokeWidth="2" fill="none">
               <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z" />
               <line x1="3" y1="6" x2="21" y2="6" />
@@ -46,7 +46,7 @@ export default function Header() {
             </svg>
             <span className="cart-text">BAG</span> <span className="cart-badge-count">{cartCount}</span>
           </button>
-          <button className="mobile-menu-toggle" aria-label="Open menu" onClick={() => setMobileDrawerOpen(true)}>
+          <button type="button" className="mobile-menu-toggle" aria-label="Open menu" onClick={() => setMobileDrawerOpen(true)}>
             <span />
             <span />
             <span />

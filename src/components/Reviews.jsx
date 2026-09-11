@@ -35,12 +35,16 @@ export default function Reviews() {
                 <div
                   key={rev.id}
                   className="card-rotate"
+                  role={isTop ? 'button' : undefined}
+                  tabIndex={isTop ? 0 : undefined}
                   onClick={isTop ? triggerStackNext : undefined}
+                  onKeyDown={isTop ? (e) => { if (e.key === 'Enter' || e.key === ' ') triggerStackNext(); } : undefined}
                   style={{
                     zIndex: total - offset,
                     transform: `translate3d(0px, ${offset * 12}px, -${offset * 35}px) scale(${1 - offset * 0.04})`,
                     opacity: offset > 3 ? 0 : 1,
                     pointerEvents: isTop ? 'auto' : 'none',
+                    cursor: isTop ? 'pointer' : 'default',
                   }}
                 >
                   <div className="card">

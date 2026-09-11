@@ -72,8 +72,12 @@ const upload = multer({
   storage,
   limits: { fileSize: 20 * 1024 * 1024 },
   fileFilter: (_req, file, cb) => {
-    const ok = /^(image|video)\//.test(file.mimetype);
-    cb(ok ? null : new Error('Only image or video files are allowed.'), ok);
+    const mime = String(file.mimetype || '').toLowerCase();
+    const ext = path.extname(file.originalname || '').toLowerCase();
+    const okMime = /^(image|video)\//.test(mime);
+    const okExt = /\.(jpe?g|png|gif|webp|heic|heif|avif|bmp|mp4|mov|m4v|webm|3gp)$/i.test(ext);
+    const ok = okMime || okExt;
+    cb(ok ? null : new Error('Only image or video files are allowed.'), !!ok);
   },
 });
 
@@ -653,17 +657,25 @@ app.get('/api/admin/analytics', authenticateAdmin, (_req, res) => {
 function sendUploadResult(req, res) {
   if (!req.file) return res.status(400).json({ success: false, error: 'No file uploaded.' });
   const fileUrl = `/uploads/${req.file.filename}`;
+  const ext = path.extname(req.file.originalname || req.file.filename || '').toLowerCase();
+  const isVideo = String(req.file.mimetype || '').startsWith('video') || /\.(mp4|mov|m4v|webm|3gp)$/i.test(ext);
   res.json({
     success: true,
     url: fileUrl,
     filename: req.file.filename,
     size: req.file.size,
-    isVideo: String(req.file.mimetype || '').startsWith('video'),
+    isVideo,
   });
 }
 
 app.post('/api/upload', authenticateAdmin, upload.single('file'), (req, res) => sendUploadResult(req, res));
 app.post('/api/upload/public', upload.single('file'), (req, res) => sendUploadResult(req, res));
+app.use((err, _req, res, next) => {
+  if (err instanceof multer.MulterError || err.message === 'Only image or video files are allowed.') {
+    return res.status(400).json({ success: false, error: err.message || 'Upload failed.' });
+  }
+  return next(err);
+});
 
 if (IS_PRODUCTION) {
   app.use(express.static(DIST_DIR));

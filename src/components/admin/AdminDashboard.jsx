@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -14,6 +14,7 @@ import {
 import { Bar, Line } from 'react-chartjs-2';
 import { apiGet, apiPost, orderStatusMeta, uploadFile } from '../../api/client';
 import { useStore } from '../../context/StoreContext';
+import FileUploadZone from '../FileUploadZone';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, LineElement, PointElement, Title, Tooltip, Legend, Filler);
 
@@ -202,7 +203,6 @@ function OrdersTab({ historyOnly }) {
 
 function AddProductTab() {
   const { saveProduct, editingProduct, setEditingProduct, categories } = useStore();
-  const fileRef = useRef(null);
   const [previews, setPreviews] = useState(editingProduct?.images || []);
   const [saving, setSaving] = useState(false);
 
@@ -275,28 +275,22 @@ function AddProductTab() {
       <div className="form-group"><label>Description</label><textarea name="description" rows={2} defaultValue={editingProduct?.description || ''} /></div>
       <div className="form-group">
         <label>Gallery images from your device (recommended)</label>
-        <div className="image-upload-dropzone" onClick={() => fileRef.current?.click()}>
-          <input
-            type="file"
-            ref={fileRef}
-            accept="image/*"
-            multiple
-            style={{ display: 'none' }}
-            onChange={async (e) => {
-              const files = [...(e.target.files || [])].slice(0, 6);
-              for (const file of files) {
-                try {
-                  const data = await uploadFile(file);
-                  if (data.success) setPreviews((prev) => [...prev, data.url]);
-                  else alert(data.error || 'Upload failed');
-                } catch (err) {
-                  alert('Upload failed: ' + err.message);
-                }
+        <FileUploadZone
+          multiple
+          onFiles={async (files) => {
+            for (const file of files.slice(0, 6)) {
+              try {
+                const data = await uploadFile(file);
+                if (data.success) setPreviews((prev) => [...prev, data.url]);
+                else alert(data.error || 'Upload failed');
+              } catch (err) {
+                alert('Upload failed: ' + err.message);
               }
-            }}
-          />
-          <span style={{ color: 'var(--gold-400)' }}>Click to upload saree photos from gallery or camera</span>
-        </div>
+            }
+          }}
+        >
+          <span style={{ color: 'var(--gold-400)' }}>Tap to upload saree photos from gallery or camera</span>
+        </FileUploadZone>
         <div className="preview-thumb-box">
           {previews.map((src) => <img key={src} src={src} alt="preview" />)}
         </div>
@@ -312,7 +306,6 @@ function AddProductTab() {
 
 function HeroTab() {
   const { heroSlides, deleteHeroSlide, handleHeroSlideSave } = useStore();
-  const fileRef = useRef(null);
   const [imageUrl, setImageUrl] = useState('');
 
   return (
@@ -337,16 +330,18 @@ function HeroTab() {
           <div className="form-group"><label>Label *</label><input name="label" required placeholder="Bridal Pattu" /></div>
           <div className="form-group"><label>Sort</label><input name="sort_order" type="number" defaultValue={1} /></div>
         </div>
-        <div className="image-upload-dropzone" onClick={() => fileRef.current?.click()}>
-          <input type="file" ref={fileRef} accept="image/*" style={{ display: 'none' }} onChange={async (e) => {
-            const file = e.target.files?.[0];
+        <FileUploadZone
+          onFiles={async (files) => {
+            const file = files[0];
             if (!file) return;
             const data = await uploadFile(file);
             if (data.success) setImageUrl(data.url);
-          }} />
+            else alert(data.error || 'Upload failed');
+          }}
+        >
           <span style={{ color: 'var(--gold-400)' }}>Upload a high-resolution saree / model photo</span>
           {imageUrl ? <div className="preview-thumb-box"><img src={imageUrl} alt="" /></div> : null}
-        </div>
+        </FileUploadZone>
         <div className="form-group" style={{ marginTop: 10 }}>
           <input name="image_url" placeholder="Or paste image URL" value={imageUrl} onChange={(e) => setImageUrl(e.target.value)} />
         </div>
@@ -441,8 +436,6 @@ function CategoriesTab() {
   const [drafts, setDrafts] = useState({});
   const [savingId, setSavingId] = useState(null);
   const [newCat, setNewCat] = useState({ title: '', cta: 'EXPLORE →', image_url: '', slug: '' });
-  const newFileRef = useRef(null);
-  const fileRefs = useRef({});
 
   useEffect(() => {
     const next = {};
@@ -501,18 +494,12 @@ function CategoriesTab() {
                 <input value={row.image_url || ''} onChange={(e) => updateDraft(cat.id, 'image_url', e.target.value)} placeholder="https://... or upload below" />
               </div>
               <div className="toolbar-row">
-                <button type="button" className="admin-nav-tab" onClick={() => fileRefs.current[cat.id]?.click()}>Upload from computer</button>
-                <input
-                  type="file"
-                  accept="image/*"
-                  ref={(el) => { fileRefs.current[cat.id] = el; }}
-                  style={{ display: 'none' }}
-                  onChange={(e) => {
-                    const file = e.target.files?.[0];
-                    e.target.value = '';
-                    uploadInto(file, (url) => updateDraft(cat.id, 'image_url', url));
-                  }}
-                />
+                <FileUploadZone
+                  className="admin-nav-tab ios-file-btn"
+                  onFiles={(files) => uploadInto(files[0], (url) => updateDraft(cat.id, 'image_url', url))}
+                >
+                  Upload from computer
+                </FileUploadZone>
                 <button type="button" className="gold-luxury-btn" disabled={savingId === cat.id} onClick={() => saveRow(cat.id)}>
                   {savingId === cat.id ? 'Saving…' : 'Save Category'}
                 </button>
@@ -544,15 +531,14 @@ function CategoriesTab() {
           <div className="form-group"><label>Name *</label><input value={newCat.title} onChange={(e) => setNewCat((p) => ({ ...p, title: e.target.value }))} placeholder="Kids Wear" required /></div>
           <div className="form-group"><label>Button text</label><input value={newCat.cta} onChange={(e) => setNewCat((p) => ({ ...p, cta: e.target.value }))} /></div>
         </div>
-        <div className="image-upload-dropzone" onClick={() => newFileRef.current?.click()}>
-          <input type="file" ref={newFileRef} accept="image/*" style={{ display: 'none' }} onChange={(e) => {
-            const file = e.target.files?.[0];
-            e.target.value = '';
-            uploadInto(file, (url) => setNewCat((p) => ({ ...p, image_url: url })));
-          }} />
+        <FileUploadZone
+          onFiles={(files) => {
+            uploadInto(files[0], (url) => setNewCat((p) => ({ ...p, image_url: url })));
+          }}
+        >
           <span style={{ color: 'var(--gold-400)' }}>Upload a category photo from your computer</span>
           {newCat.image_url ? <div className="preview-thumb-box"><img src={newCat.image_url} alt="" /></div> : null}
-        </div>
+        </FileUploadZone>
         <div className="form-group" style={{ marginTop: 10 }}>
           <label>Or paste image URL</label>
           <input value={newCat.image_url} onChange={(e) => setNewCat((p) => ({ ...p, image_url: e.target.value }))} placeholder="https://..." />

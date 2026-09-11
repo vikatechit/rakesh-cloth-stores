@@ -1,8 +1,16 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { orderStatusMeta } from '../api/client';
 import { useStore } from '../context/StoreContext';
+import FileUploadZone from './FileUploadZone';
 
 function ModalOverlay({ active, onClose, children, cardClass = 'modal-md' }) {
+  useEffect(() => {
+    if (!active) return undefined;
+    const previous = document.body.style.overflow;
+    document.body.style.overflow = 'hidden';
+    return () => { document.body.style.overflow = previous || ''; };
+  }, [active]);
+
   if (!active) return null;
   return (
     <div className="modal-overlay active" onClick={onClose}>
@@ -40,7 +48,6 @@ export default function Modals() {
   const [lookupMobile, setLookupMobile] = useState('');
   const [lookupOrders, setLookupOrders] = useState(null);
   const [reviewMedia, setReviewMedia] = useState({ url: '', isVideo: false, preview: '' });
-  const reviewFileRef = useRef(null);
 
   useEffect(() => {
     if (!modals.orderModal) return;
@@ -331,22 +338,18 @@ export default function Modals() {
           </div>
           <div className="form-group">
             <label>Photo or Video</label>
-            <div className="image-upload-dropzone" onClick={() => reviewFileRef.current?.click()}>
-              <input
-                type="file"
-                ref={reviewFileRef}
-                accept="image/*,video/*"
-                style={{ display: 'none' }}
-                onChange={async (e) => {
-                  const file = e.target.files?.[0];
-                  if (!file) return;
-                  const result = await handleReviewMediaUpload(file);
-                  if (result) setReviewMedia({ url: result.url, isVideo: result.isVideo, preview: result.url });
-                }}
-              />
-              <span style={{ fontSize: 13, color: '#d4af37' }}>Click to upload photo / video</span>
+            <FileUploadZone
+              accept="image/jpeg,image/png,image/webp,image/heic,image/heif,image/*,video/mp4,video/quicktime,video/*"
+              onFiles={async (files) => {
+                const file = files[0];
+                if (!file) return;
+                const result = await handleReviewMediaUpload(file);
+                if (result) setReviewMedia({ url: result.url, isVideo: result.isVideo, preview: result.url });
+              }}
+            >
+              <span style={{ fontSize: 13, color: '#d4af37' }}>Tap to upload photo / video from gallery or camera</span>
               {reviewMedia.preview ? <div className="preview-thumb-box"><img src={reviewMedia.preview} alt="preview" /></div> : null}
-            </div>
+            </FileUploadZone>
           </div>
           <button type="submit" className="gold-luxury-btn btn-full">PUBLISH REVIEW ›</button>
         </form>

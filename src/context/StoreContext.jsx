@@ -12,6 +12,7 @@ import {
   setAdminToken,
   slugifyCategory,
   uploadFile,
+  openExternalUrl,
 } from '../api/client';
 
 const StoreContext = createContext(null);
@@ -197,7 +198,7 @@ export function StoreProvider({ children }) {
   const openWhatsAppInquiry = useCallback(
     (message) => {
       const num = storeSettings.whatsapp_number || DEFAULT_SETTINGS.whatsapp_number;
-      window.open(`https://wa.me/${num}?text=${encodeURIComponent(message)}`, '_blank');
+      openExternalUrl(`https://wa.me/${num}?text=${encodeURIComponent(message)}`);
     },
     [storeSettings.whatsapp_number]
   );
@@ -209,7 +210,7 @@ export function StoreProvider({ children }) {
       `${i + 1}. ${p.name} | ₹${p.price.toLocaleString('en-IN')} | Qty: ${p.qty}`,
       `Photo: ${window.location.origin}${p.image_url?.startsWith('http') ? '' : ''}${p.image_url}`,
     ]), '', `Total: ₹${cartTotal.toLocaleString('en-IN')}`, '', 'Please confirm availability.'];
-    window.open(`https://wa.me/${num}?text=${encodeURIComponent(lines.join('\n'))}`, '_blank');
+    openExternalUrl(`https://wa.me/${num}?text=${encodeURIComponent(lines.join('\n'))}`);
   }, [cart, cartTotal, storeSettings.whatsapp_number]);
 
   const placeOrderStart = useCallback(() => {
@@ -270,7 +271,7 @@ export function StoreProvider({ children }) {
       `Total: ₹${Number(order.total_amount).toLocaleString('en-IN')}\n\n` +
       `Items:\n${itemsText}\n\n` +
       `Please confirm my order. Thank you!`;
-    window.open(`https://wa.me/${num}?text=${encodeURIComponent(msg)}`, '_blank');
+    openExternalUrl(`https://wa.me/${num}?text=${encodeURIComponent(msg)}`);
   }, [lastCreatedOrder, viewingOrder, storeSettings.whatsapp_number]);
 
   const openWhatsAppVideoCall = useCallback((order) => {
@@ -289,7 +290,7 @@ export function StoreProvider({ children }) {
       `Mobile: ${order.mobile}\n\n` +
       `Items:\n${itemsText}\n\n` +
       `Thank you.`;
-    window.open(`https://wa.me/${num}?text=${encodeURIComponent(msg)}`, '_blank');
+    openExternalUrl(`https://wa.me/${num}?text=${encodeURIComponent(msg)}`);
   }, [storeSettings.whatsapp_number]);
 
   const lookupCustomerOrders = useCallback(async (mobile) => {

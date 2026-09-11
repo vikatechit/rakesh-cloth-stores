@@ -1,7 +1,13 @@
+import { useEffect } from 'react';
 import { useStore } from '../context/StoreContext';
 
 export default function CartDrawer() {
   const { cart, cartOpen, cartCount, cartTotal, closeCart, updateCartQty, placeOrderStart } = useStore();
+
+  useEffect(() => {
+    document.body.style.overflow = cartOpen ? 'hidden' : '';
+    return () => { document.body.style.overflow = ''; };
+  }, [cartOpen]);
 
   return (
     <div className={`cart-drawer-backdrop${cartOpen ? ' active' : ''}`} onClick={closeCart}>
@@ -11,7 +17,7 @@ export default function CartDrawer() {
             <span className="drawer-title-gold">YOUR SHOPPING BAG</span>
             <span className="drawer-item-subtitle">{cartCount} piece{cartCount !== 1 ? 's' : ''} • max 5 styles</span>
           </div>
-          <button className="drawer-close-btn" onClick={closeCart}>✕</button>
+          <button type="button" className="drawer-close-btn" onClick={closeCart} aria-label="Close bag">✕</button>
         </div>
         <div className="cart-items-scroll-area">
           {!cart.length ? (
@@ -30,9 +36,9 @@ export default function CartDrawer() {
                   </div>
                 </div>
                 <div className="cart-qty-stepper">
-                  <button onClick={() => updateCartQty(item.id, -1)}>−</button>
+                  <button type="button" onClick={() => updateCartQty(item.id, -1)}>−</button>
                   <span>{item.qty}</span>
-                  <button onClick={() => updateCartQty(item.id, 1)}>+</button>
+                  <button type="button" onClick={() => updateCartQty(item.id, 1)}>+</button>
                 </div>
               </div>
             ))
