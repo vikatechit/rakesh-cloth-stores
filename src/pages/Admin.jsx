@@ -4,6 +4,9 @@ import { BRAND, CATEGORIES, cleanUrl } from '../data/brand';
 import { useStore } from '../context/Store';
 import { money } from '../lib/format';
 import { downloadOrdersExcel } from '../lib/excel';
+import PhotoPicker from '../components/PhotoPicker';
+import FileUploadZone from '../components/FileUploadZone';
+import { PHOTO_ACCEPT } from '../lib/image';
 
 const STATUSES = ['New', 'Confirmed', 'Packed', 'Out for delivery', 'Delivered', 'Cancelled'];
 const EMPTY_ADDRESS = { id: '', label: '', line1: '', line2: '', city: '', state: '', pin: '' };
@@ -40,6 +43,21 @@ export default function Admin() {
   const [heroForm, setHeroForm] = useState({ label: '', image_url: '', link: '/shop' });
   const [catForm, setCatForm] = useState({ title: '', cta: 'SHOP →', image_url: '' });
   const [busy, setBusy] = useState(false);
+  const [photoBusy, setPhotoBusy] = useState(false);
+
+  const pickProductPhoto = async (file, onUrl) => {
+    if (!file) return;
+    setPhotoBusy(true);
+    setError('');
+    const result = await store.saveProductPhoto(file);
+    setPhotoBusy(false);
+    if (!result.ok) {
+      setError(result.error);
+      return;
+    }
+    onUrl(result.url);
+    setNotice(result.warning || 'Photo ready. Publish the piece to show it on the live website.');
+  };
 
   const stats = useMemo(() => {
     const byCat = {};
@@ -266,15 +284,22 @@ export default function Admin() {
               </div>
             </div>
             <div className="form-group">
-              <label>Image URL</label>
-              <input value={draft.img} onChange={(e) => setDraft({ ...draft, img: e.target.value })} placeholder="https://…" />
+              <label>Product photo</label>
+              <PhotoPicker
+                value={draft.img}
+                busy={photoBusy}
+                onChange={(img) => setDraft({ ...draft, img })}
+                onPickFile={(file) => pickProductPhoto(file, (img) => setDraft({ ...draft, img }))}
+              />
             </div>
             <div className="form-group">
               <label>Description</label>
               <textarea value={draft.desc} onChange={(e) => setDraft({ ...draft, desc: e.target.value })} rows={3} />
             </div>
             {error && tab === 'catalogue' ? <p className="rks-err">{error}</p> : null}
-            <button className="gold-luxury-btn btn-full" type="submit">Publish on website</button>
+            <button className="gold-luxury-btn btn-full" type="submit" disabled={busy || photoBusy}>
+              {photoBusy ? 'Saving photo…' : 'Publish on website'}
+            </button>
           </form>
           <div className="rks-panel">
             <h2>Live catalogue</h2>
@@ -295,6 +320,21 @@ export default function Admin() {
                       const result = await store.updateProduct(p.id, { price: Number(price) });
                       setNotice(result.ok ? `Price updated for ${p.name}.` : result.error);
                     }}>Price</button>
+                    <FileUploadZone
+                      className="text-btn ios-file-btn"
+                      accept={PHOTO_ACCEPT}
+                      onFiles={async (files) => {
+                        const result = await store.saveProductPhoto(files[0]);
+                        if (!result.ok) {
+                          setError(result.error);
+                          return;
+                        }
+                        await store.updateProduct(p.id, { image_url: result.url, img: result.url });
+                        setNotice(result.warning || `Photo updated for ${p.name}.`);
+                      }}
+                    >
+                      Photo
+                    </FileUploadZone>
                     <button type="button" className="text-btn" onClick={async () => {
                       if (!window.confirm(`Hide ${p.name} from the website?`)) return;
                       await store.deleteProduct(p.id);
@@ -465,7 +505,7 @@ export default function Admin() {
           <ul>
             <li><strong>Orders</strong> — order id, date, customer, phone, address, items and status. Set status to Confirmed to unlock WhatsApp video.</li>
             <li><strong>Customers</strong> — phone, name and address.</li>
-            <li><strong>Products</strong> — name, category, price, stock, image and description.</li>
+            <li><strong>Products</strong> — name, category, price, stock, image and description. Camera and gallery photos are stored in Google Drive folder RakeshClothStores-Photos.</li>
             <li><strong>Enquiries</strong> — messages from the contact page.</li>
             <li><strong>Reviews</strong> — customer looks shared on the website.</li>
             <li><strong>Settings</strong> — admin password, WhatsApp number, addresses and social links.</li>

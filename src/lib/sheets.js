@@ -49,3 +49,14 @@ export async function postAction(url, action, payload) {
   body.set('payload', JSON.stringify(payload));
   return parse(await fetch(url, { method: 'POST', body }));
 }
+
+export async function uploadImage(url, { password, name, mime, data }) {
+  const body = new URLSearchParams();
+  body.set('action', 'uploadimage');
+  body.set('password', password || '');
+  body.set('name', name || 'photo.jpg');
+  body.set('mime', mime || 'image/jpeg');
+  body.set('data', data);
+  body.set('payload', JSON.stringify({ password, name, mime }));
+  return parse(await fetch(url, { method: 'POST', body }));
+}

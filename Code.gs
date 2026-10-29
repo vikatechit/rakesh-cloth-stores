@@ -82,6 +82,15 @@ function setup() {
   }
 }
 
+function photosFolder() {
+  const ssFile = DriveApp.getFileById(book().getId());
+  const parents = ssFile.getParents();
+  const parent = parents.hasNext() ? parents.next() : DriveApp.getRootFolder();
+  const existing = parent.getFoldersByName('RakeshClothStores-Photos');
+  if (existing.hasNext()) return existing.next();
+  return parent.createFolder('RakeshClothStores-Photos');
+}
+
 function rememberCustomer(ss, customer) {
   if (!customer) return;
   var phone = String(customer.phone || '').trim();
@@ -302,6 +311,28 @@ function doPost(e) {
       ]);
       rememberCustomer(ss, payload.customer);
       return json({ ok: true, order_id: orderId });
+    }
+
+    if (action === 'uploadimage') {
+      var password = e.parameter.password || payload.password;
+      if (!passwordOk(password)) return json({ ok: false, error: 'Unauthorized' });
+      var raw = String(e.parameter.data || payload.data || '');
+      raw = raw.replace(/^data:image\/[^;]+;base64,/, '');
+      if (!raw) return json({ ok: false, error: 'No photo data' });
+      var mime = String(e.parameter.mime || payload.mime || 'image/jpeg');
+      var name = String(e.parameter.name || payload.name || ('rks-' + Date.now() + '.jpg'));
+      var bytes = Utilities.base64Decode(raw);
+      var blob = Utilities.newBlob(bytes, mime, name);
+      var file = photosFolder().createFile(blob);
+      try {
+        file.setSharing(DriveApp.Access.ANYONE_WITH_LINK, DriveApp.Permission.VIEW);
+      } catch (shareErr) {}
+      var id = file.getId();
+      return json({
+        ok: true,
+        id: id,
+        url: 'https://lh3.googleusercontent.com/d/' + id + '=s1600'
+      });
     }
 
     if (action === 'addproduct') {

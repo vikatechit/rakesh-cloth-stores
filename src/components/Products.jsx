@@ -85,7 +85,7 @@ export default function Products() {
                   {isOutOfStock ? 'SOLD OUT' : isLowStock ? 'FEW LEFT' : p.badge || 'NEW'}
                 </div>
                 <button type="button" className="product-img-wrapper" onClick={() => openProductDetail(p.id)}>
-                  <img src={p.image_url} alt={p.name} loading="lazy" />
+                  <img src={p.image_url} alt={p.name} loading="lazy" referrerPolicy="no-referrer" />
                   <span className="product-quickview-overlay">
                     <span className="quickview-btn">VIEW DETAILS ›</span>
                   </span>

@@ -1,8 +1,9 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from 'react';
 import { CATALOG, HERO_SLIDES, REVIEWS } from '../data/catalog';
 import { BRAND, CATEGORIES, PRICE_TIERS, SHOP_ADDRESS, formatWhatsapp, waLink } from '../data/brand';
-import { checkPassword, fetchOrders, fetchProducts, fetchSettings, postAction } from '../lib/sheets';
+import { checkPassword, fetchOrders, fetchProducts, fetchSettings, postAction, uploadImage } from '../lib/sheets';
 import { orderStamp } from '../lib/format';
+import { processPhoto } from '../lib/image';
 
 const StoreContext = createContext(null);
 
@@ -172,7 +173,9 @@ export function StoreProvider({ children }) {
   const [toast, setToast] = useState('');
 
   useEffect(() => { localStorage.setItem(K.cart, JSON.stringify(cart)); }, [cart]);
-  useEffect(() => { localStorage.setItem(K.custom, JSON.stringify(custom)); }, [custom]);
+  useEffect(() => {
+    try { localStorage.setItem(K.custom, JSON.stringify(custom)); } catch { /* photo quota */ }
+  }, [custom]);
   useEffect(() => { localStorage.setItem(K.hidden, JSON.stringify(hidden)); }, [hidden]);
   useEffect(() => { localStorage.setItem(K.orders, JSON.stringify(orders)); }, [orders]);
   useEffect(() => { localStorage.setItem(K.reviews, JSON.stringify(localReviews)); }, [localReviews]);
@@ -701,6 +704,44 @@ export function StoreProvider({ children }) {
     return { ok: true };
   };
 
+  const saveProductPhoto = async (file) => {
+    if (!file) return { ok: false, error: 'Choose a photo first.' };
+    let processed;
+    try {
+      processed = await processPhoto(file);
+    } catch (err) {
+      return { ok: false, error: err?.message || 'This photo could not be used.' };
+    }
+    if (!scriptUrl) {
+      return {
+        ok: true,
+        url: processed.dataUrl,
+        warning: 'Photo is ready on this phone. Connect the Google Sheet in Settings so every visitor sees it on the live website.',
+      };
+    }
+    const password = sessionStorage.getItem('rks_admin_pw') || '';
+    try {
+      const data = await uploadImage(scriptUrl, {
+        password,
+        name: processed.name,
+        mime: processed.mime,
+        data: processed.dataUrl.split(',')[1] || '',
+      });
+      if (data?.ok && data.url) return { ok: true, url: data.url };
+      return {
+        ok: true,
+        url: processed.dataUrl,
+        warning: 'Photo preview is ready. Paste the latest Code.gs into Apps Script and deploy a new web app version so photos save for every visitor.',
+      };
+    } catch {
+      return {
+        ok: true,
+        url: processed.dataUrl,
+        warning: 'Photo preview is ready. The live sheet could not store it yet. Update Code.gs and deploy a new web app version.',
+      };
+    }
+  };
+
   const addProduct = async (draft) => {
     const name = String(draft.name || '').trim();
     if (!name) return { ok: false, error: 'Item name is required.' };
@@ -722,10 +763,21 @@ export function StoreProvider({ children }) {
     setCustom((prev) => [product, ...prev]);
     if (scriptUrl) {
       const password = sessionStorage.getItem('rks_admin_pw') || '';
+      const sheetImg = product.image_url.startsWith('data:') ? '' : product.image_url;
       try {
-        await postAction(scriptUrl, 'addproduct', { password, ...product, cat: product.category, img: product.image_url, desc: product.description });
+        await postAction(scriptUrl, 'addproduct', {
+          password,
+          ...product,
+          cat: product.category,
+          img: sheetImg,
+          image_url: sheetImg,
+          desc: product.description,
+        });
       } catch {
         return { ok: true, warning: 'Added on this browser. Google Sheet could not be updated.' };
+      }
+      if (product.image_url.startsWith('data:')) {
+        return { ok: true, product, warning: 'Item is on this phone. Update Code.gs and deploy a new web app version so the photo is stored for every visitor.' };
       }
     }
     return { ok: true, product };
@@ -899,7 +951,8 @@ export function StoreProvider({ children }) {
     fetchProducts: async () => {},
     fetchHero: async () => {},
     fetchReviews: async () => {},
-    uploadFile: async () => ({ success: false }),
+    uploadFile: saveProductPhoto,
+    saveProductPhoto,
     activeReviewIndex,
     triggerStackNext: () => setActiveReviewIndex((prev) => (localReviews.length ? (prev + 1) % localReviews.length : 0)),
     isAdmin: authed,

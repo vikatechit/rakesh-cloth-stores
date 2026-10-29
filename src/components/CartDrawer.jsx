@@ -30,7 +30,7 @@ export default function CartDrawer() {
           ) : (
             cart.map((item) => (
               <div className="cart-drawer-item" key={item.id}>
-                <img src={item.image_url} alt={item.name} />
+                <img src={item.image_url} alt={item.name} referrerPolicy="no-referrer" />
                 <div>
                   <div className="cart-item-title">{item.name}</div>
                   <div style={{ fontWeight: 700, color: 'var(--gold-400)', fontSize: 14 }}>

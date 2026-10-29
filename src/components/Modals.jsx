@@ -68,7 +68,7 @@ export default function Modals() {
         {product ? (
           <div className="product-modal-body">
             <div className="product-modal-gallery">
-              <img src={gallery[galleryIndex] || product.image_url} alt={product.name} />
+              <img src={gallery[galleryIndex] || product.image_url} alt={product.name} referrerPolicy="no-referrer" />
               {gallery.length > 1 ? (
                 <div className="rks-thumbs">
                   {gallery.map((src, i) => (

@@ -54,7 +54,7 @@ export default function Checkout() {
           <div className="rks-panel">
             {store.cart.map((item) => (
               <div className="mini-product" key={item.id}>
-                <img src={item.image_url} alt={item.name} />
+                <img src={item.image_url} alt={item.name} referrerPolicy="no-referrer" />
                 <div>
                   <b>{item.name}</b>
                   <br />

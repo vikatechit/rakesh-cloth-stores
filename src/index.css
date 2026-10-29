@@ -2555,6 +2555,7 @@ button, input, select, textarea {
   align-items: center;
   justify-content: center;
   overflow: hidden;
+  min-height: 28px;
 }
 
 .image-upload-dropzone:hover {
@@ -2574,6 +2575,67 @@ button, input, select, textarea {
   object-fit: cover;
   border-radius: 4px;
   border: 1px solid var(--gold-500);
+}
+
+.photo-picker {
+  display: grid;
+  gap: 12px;
+}
+
+.photo-picker-preview {
+  display: grid;
+  gap: 8px;
+  justify-items: start;
+}
+
+.photo-picker-preview img {
+  width: 100%;
+  max-width: 280px;
+  height: 220px;
+  object-fit: cover;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--gold-500);
+  background: #041c14;
+}
+
+.photo-picker-empty {
+  min-height: 88px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px dashed var(--gold-500);
+  border-radius: var(--radius-sm);
+  color: var(--text-muted);
+  font-size: 13px;
+  background: rgba(8, 52, 39, 0.3);
+}
+
+.photo-picker-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.photo-picker-actions .outline-gold-btn {
+  position: relative;
+  overflow: hidden;
+  min-height: 48px;
+  padding: 12px 18px;
+}
+
+.photo-picker-url {
+  display: grid;
+  gap: 6px;
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.5px;
+  color: var(--cream-200);
+}
+
+.photo-picker-hint {
+  margin: 0;
+  font-size: 12px;
+  line-height: 1.45;
 }
 
 /* ==========================================================================

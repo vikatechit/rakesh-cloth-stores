@@ -5,6 +5,7 @@
 export default function FileUploadZone({
   accept = 'image/jpeg,image/png,image/webp,image/heic,image/heif,image/*',
   multiple = false,
+  capture,
   onFiles,
   children,
   className = 'image-upload-dropzone',
@@ -15,6 +16,7 @@ export default function FileUploadZone({
         type="file"
         accept={accept}
         multiple={multiple}
+        {...(capture ? { capture } : {})}
         className="ios-file-input"
         onChange={async (e) => {
           const files = [...(e.target.files || [])];

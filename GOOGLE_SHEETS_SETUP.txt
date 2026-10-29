@@ -33,9 +33,15 @@ Default password: 1234
 
 What the store can change on the website:
 - Add / hide products, restock, change price
+- Product photos from camera, phone gallery or computer (JPG, PNG, WEBP, HEIC and similar)
 - Confirm orders (status Confirmed unlocks WhatsApp video for the customer)
 - WhatsApp number, shop address, hours, Instagram, YouTube, Maps
 - Home showcase slides and categories (image URL)
+
+Product photos:
+Admin → Catalogue has Take photo, Gallery / computer, and Image URL.
+Photos are compressed, then stored in a Google Drive folder named RakeshClothStores-Photos next to the sheet. The live website uses that photo URL.
+After you paste an updated Code.gs, click Deploy → Manage deployments → pencil → New version → Deploy, then allow Google Drive access when asked.
 
 If Google Sheets is not connected yet:
 The website uses the built-in catalogue. Admin edits still work on that browser until the /exec URL is saved.
