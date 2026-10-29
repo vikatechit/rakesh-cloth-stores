@@ -1,53 +1,44 @@
-import { StoreProvider } from './context/StoreContext';
-import Header from './components/Header';
-import MobileDrawer from './components/MobileDrawer';
-import Hero from './components/Hero';
-import Benefits from './components/Benefits';
-import Categories from './components/Categories';
-import Products from './components/Products';
-import HowToOrder from './components/HowToOrder';
-import Reviews from './components/Reviews';
-import Story from './components/Story';
-import Footer from './components/Footer';
-import FloatingActions from './components/FloatingActions';
-import CartDrawer from './components/CartDrawer';
-import Modals from './components/Modals';
-import AdminDashboard from './components/admin/AdminDashboard';
+import { BrowserRouter, Route, Routes } from 'react-router-dom';
+import { StoreProvider } from './context/Store';
+import Layout from './components/Layout';
+import ScrollToTop from './components/ScrollToTop';
+import Home from './pages/Home';
+import Shop from './pages/Shop';
+import Categories from './pages/Categories';
+import How from './pages/How';
+import ReviewsPage from './pages/ReviewsPage';
+import About from './pages/About';
+import Contact from './pages/Contact';
+import Checkout from './pages/Checkout';
+import Success from './pages/Success';
+import LegalPage from './pages/LegalPage';
+import Admin from './pages/Admin';
 
 export default function App() {
   return (
     <StoreProvider>
-      <div className="announcement-bar">
-        <span className="announcement-full">Open every day • 10:00 AM – 8:30 PM • WhatsApp video after the store confirms your order</span>
-        <span className="announcement-short">Open daily 10:00 AM – 8:30 PM • WhatsApp video after confirm</span>
-      </div>
-      <Header />
-      <MobileDrawer />
-      <main>
-        <Hero />
-        <Benefits />
-        <div className="cream-page-band">
-          <Categories />
-          <Products />
-        </div>
-        <HowToOrder />
-        <Reviews />
-        <Story />
-      </main>
-      <Footer />
-      <FloatingActions />
-      <CartDrawer />
-      <Modals />
-      <AdminDashboard />
-      <svg width="0" height="0" style={{ position: 'absolute' }}>
-        <defs>
-          <linearGradient id="goldCrownGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-            <stop offset="0%" stopColor="#fef08a" />
-            <stop offset="50%" stopColor="#d4af37" />
-            <stop offset="100%" stopColor="#996515" />
-          </linearGradient>
-        </defs>
-      </svg>
+      <BrowserRouter>
+        <ScrollToTop />
+        <Layout>
+          <Routes>
+            <Route path="/" element={<Home />} />
+            <Route path="/categories" element={<Categories />} />
+            <Route path="/shop" element={<Shop />} />
+            <Route path="/shop/:slug" element={<Shop />} />
+            <Route path="/how" element={<How />} />
+            <Route path="/reviews" element={<ReviewsPage />} />
+            <Route path="/about" element={<About />} />
+            <Route path="/contact" element={<Contact />} />
+            <Route path="/order" element={<Checkout />} />
+            <Route path="/success" element={<Success />} />
+            <Route path="/privacy" element={<LegalPage />} />
+            <Route path="/terms" element={<LegalPage />} />
+            <Route path="/shipping" element={<LegalPage />} />
+            <Route path="/refunds" element={<LegalPage />} />
+            <Route path="/admin" element={<Admin />} />
+          </Routes>
+        </Layout>
+      </BrowserRouter>
     </StoreProvider>
   );
 }

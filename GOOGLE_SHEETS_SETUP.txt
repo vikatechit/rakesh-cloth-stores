@@ -1,0 +1,45 @@
+RAKESH CLOTH STORES — GOOGLE SHEETS BACKEND SETUP
+Quality Matters • WhatsApp: +91 99857 28175
+Kurmannapalem, Visakhapatnam
+
+The website is a React + Vite shop, hosted on Vercel. There is no Render or Railway server.
+Orders, catalogue, WhatsApp number and shop details live in a Google Sheet.
+
+1. Create a new Google Sheet in Google Drive.
+2. Go to: Extensions -> Apps Script.
+3. Paste the contents of Code.gs from this website package into the editor. Save.
+4. In the function dropdown, select setup() and click Run (authorize Google access when prompted).
+   This creates the tabs:
+   - Products
+   - Orders
+   - Customers
+   - Enquiries
+   - Reviews
+   - Settings
+   - Categories
+   and seeds the boutique catalogue.
+5. Click Deploy -> New deployment.
+6. Select type: Web app.
+7. Settings:
+   - Execute as: Me (your Google account)
+   - Who has access: Anyone
+8. Click Deploy, authorize if prompted, and copy the Web App URL (ends in /exec).
+9. Open the live website -> footer ✦ or /admin -> password 1234 -> Settings.
+   Paste the /exec URL and save.
+10. Change the admin password in Admin -> Settings after the first login.
+
+Admin dashboard: /admin
+Default password: 1234
+
+What the store can change on the website:
+- Add / hide products, restock, change price
+- Confirm orders (status Confirmed unlocks WhatsApp video for the customer)
+- WhatsApp number, shop address, hours, Instagram, YouTube, Maps
+- Home showcase slides and categories (image URL)
+
+If Google Sheets is not connected yet:
+The website uses the built-in catalogue. Admin edits still work on that browser until the /exec URL is saved.
+
+Deploy: push this folder to GitHub and import the repo in Vercel (framework: Vite).
+Run `npm install` then `npm run build` locally if needed.
+There is no Node API, no SQLite, no Render, no Railway.

@@ -1,9 +1,13 @@
-import { useStore } from '../context/StoreContext';
+import { Link } from 'react-router-dom';
+import { useStore } from '../context/Store';
+import { formatAddress } from '../data/brand';
 
 export default function Footer() {
-  const { openModal, storeSettings } = useStore();
+  const { storeSettings, addresses, whatsappDisplay } = useStore();
   const logo = storeSettings.logo_url || '/logo.png';
   const wa = storeSettings.whatsapp_number || '919985728175';
+  const shop = addresses[0];
+  const line = shop ? formatAddress(shop) : null;
 
   return (
     <footer className="main-footer" id="contact">
@@ -13,27 +17,40 @@ export default function Footer() {
             <img src={logo} alt="Rakesh Cloth Stores" className="footer-logo-img" />
           </div>
           <p className="footer-tagline">Quality Matters. Premium ethnic wear with a simple, trusted customer experience.</p>
-          <div className="official-insta-wrapper">
-            <a href={storeSettings.instagram_url} target="_blank" rel="noreferrer" className="insta-luxury-badge">
-              <span>@rakesh_mahanthy</span>
-            </a>
-          </div>
+          {storeSettings.instagram_url ? (
+            <div className="official-insta-wrapper">
+              <a href={storeSettings.instagram_url} target="_blank" rel="noreferrer" className="insta-luxury-badge">
+                <span>@rakesh_mahanthy</span>
+              </a>
+            </div>
+          ) : null}
         </div>
         <div className="footer-col">
           <h4 className="footer-col-title">QUICK LINKS</h4>
           <ul className="footer-nav-list">
-            <li><a href="#home">Home</a></li>
-            <li><a href="#categories">Shop Collection</a></li>
-            <li><a href="#collections">Price Ranges</a></li>
-            <li><a href="#how">How To Order</a></li>
-            <li><a href="#reviews-section">Reviews</a></li>
+            <li><Link to="/">Home</Link></li>
+            <li><Link to="/categories">Shop Collection</Link></li>
+            <li><Link to="/shop">Price Ranges</Link></li>
+            <li><Link to="/how">How To Order</Link></li>
+            <li><Link to="/reviews">Reviews</Link></li>
+            <li><Link to="/privacy">Privacy</Link></li>
+            <li><Link to="/shipping">Shipping</Link></li>
           </ul>
         </div>
         <div className="footer-col">
           <h4 className="footer-col-title">STORE</h4>
           <ul className="footer-nav-list">
-            <li>Kurmannapalem, Gajuwaka</li>
-            <li>Vizag, Andhra Pradesh 530046</li>
+            {line ? (
+              <>
+                <li>{line.street}</li>
+                <li>{line.place}</li>
+              </>
+            ) : (
+              <>
+                <li>Kurmannapalem, Gajuwaka</li>
+                <li>Vizag, Andhra Pradesh 530046</li>
+              </>
+            )}
             <li>Open daily {storeSettings.shop_hours || '10:00 AM – 8:30 PM'}</li>
             <li><a href={storeSettings.maps_url} target="_blank" rel="noreferrer">Google Maps</a></li>
           </ul>
@@ -43,12 +60,14 @@ export default function Footer() {
           <div className="footer-contact-details">
             <div className="contact-row">
               <span>WhatsApp</span>
-              <a href={`https://wa.me/${wa}`} target="_blank" rel="noreferrer">+91 99857 28175</a>
+              <a href={`https://wa.me/${wa}`} target="_blank" rel="noreferrer">{whatsappDisplay || '+91 99857 28175'}</a>
             </div>
-            <div className="contact-row">
-              <span>YouTube</span>
-              <a href={storeSettings.youtube_url} target="_blank" rel="noreferrer">@rakeshclothstores</a>
-            </div>
+            {storeSettings.youtube_url ? (
+              <div className="contact-row">
+                <span>YouTube</span>
+                <a href={storeSettings.youtube_url} target="_blank" rel="noreferrer">@rakeshclothstores</a>
+              </div>
+            ) : null}
           </div>
         </div>
       </div>
@@ -56,16 +75,7 @@ export default function Footer() {
         <div className="footer-bottom-container">
           <div className="copyright-text">
             © {new Date().getFullYear()} Rakesh Cloth Stores. All Rights Reserved.{' '}
-            <span
-              className="secret-admin-trigger"
-              onClick={() => openModal('adminLoginModal')}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => e.key === 'Enter' && openModal('adminLoginModal')}
-              title="Admin"
-            >
-              ✦
-            </span>
+            <Link to="/admin" className="secret-admin-trigger" title="Admin">✦</Link>
           </div>
           <div className="developer-credit-box">
             <span>Developed by <strong>Vikatech</strong></span>

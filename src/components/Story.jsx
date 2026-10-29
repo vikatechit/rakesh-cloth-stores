@@ -1,4 +1,4 @@
-import { useStore } from '../context/StoreContext';
+import { useStore } from '../context/Store';
 
 export default function Story() {
   const { storeSettings } = useStore();

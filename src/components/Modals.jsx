@@ -1,6 +1,6 @@
 import { useEffect, useState } from 'react';
-import { orderStatusMeta } from '../api/client';
-import { useStore } from '../context/StoreContext';
+import { orderStatusMeta } from '../lib/format';
+import { useStore } from '../context/Store';
 import FileUploadZone from './FileUploadZone';
 
 function ModalOverlay({ active, onClose, children, cardClass = 'modal-md' }) {
@@ -30,16 +30,12 @@ export default function Modals() {
     setGalleryIndex,
     addToCartDirect,
     openWhatsAppInquiry,
-    cartCount,
-    cartTotal,
-    handleCheckoutSubmit,
     lastCreatedOrder,
     sendWhatsAppReceipt,
     openWhatsAppVideoCall,
     lookupCustomerOrders,
     handleReviewSubmit,
     handleReviewMediaUpload,
-    handleAdminLogin,
     viewingOrder,
     setViewingOrder,
     openModal,
@@ -57,8 +53,6 @@ export default function Modals() {
       const fresh = (orders || []).find((o) => o.id === current.id);
       if (fresh) setViewingOrder(fresh);
     });
-    // Refresh once when the order modal opens.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [modals.orderModal]);
 
   const product = selectedProduct;
@@ -112,100 +106,6 @@ export default function Modals() {
             </div>
           </div>
         ) : null}
-      </ModalOverlay>
-
-      <ModalOverlay active={modals.checkoutModal} onClose={() => closeModal('checkoutModal')}>
-        <button className="modal-close-icon" onClick={() => closeModal('checkoutModal')}>✕</button>
-        <div className="modal-header-banner">
-          <h2>Customer Details</h2>
-          <p>Your selected products were prepared for WhatsApp. Enter delivery details so the store can create your order.</p>
-        </div>
-        <form
-          className="luxury-form"
-          onSubmit={(e) => {
-            e.preventDefault();
-            const fd = new FormData(e.target);
-            handleCheckoutSubmit({
-              name: fd.get('name').toString().trim(),
-              mobile: fd.get('mobile').toString().trim(),
-              address: fd.get('address').toString().trim(),
-              city: fd.get('city').toString().trim(),
-              pincode: fd.get('pincode').toString().trim(),
-              paymentMethod: fd.get('paymentMethod').toString(),
-              notes: fd.get('notes').toString().trim(),
-            });
-          }}
-        >
-          <div className="form-row-2">
-            <div className="form-group">
-              <label>Full Name *</label>
-              <input name="name" required placeholder="Customer name" />
-            </div>
-            <div className="form-group">
-              <label>WhatsApp Mobile *</label>
-              <input name="mobile" type="tel" inputMode="numeric" maxLength={10} required placeholder="10-digit mobile" />
-            </div>
-          </div>
-          <div className="form-group">
-            <label>Delivery Address *</label>
-            <textarea name="address" rows={2} required placeholder="House / street / landmark" />
-          </div>
-          <div className="form-row-2">
-            <div className="form-group">
-              <label>City / Area *</label>
-              <input name="city" required placeholder="Vizag / other city" />
-            </div>
-            <div className="form-group">
-              <label>Pincode</label>
-              <input name="pincode" inputMode="numeric" maxLength={6} placeholder="530046" />
-            </div>
-          </div>
-          <div className="form-group">
-            <label>Payment Preference *</label>
-            <select name="paymentMethod" required defaultValue="Cash On Delivery (WhatsApp)">
-              <option value="Cash On Delivery (WhatsApp)">Cash On Delivery — confirm on WhatsApp</option>
-              <option value="UPI / Bank Transfer (WhatsApp)">UPI / Bank Transfer — pay via WhatsApp</option>
-            </select>
-          </div>
-          <div className="form-group">
-            <label>Notes (optional)</label>
-            <input name="notes" placeholder="Blouse, fall-pico, colour preference" />
-          </div>
-          <div className="checkout-order-summary-box" style={{ marginBottom: 14 }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, color: 'var(--gold-400)' }}>
-              <span>Grand Total ({cartCount} items)</span>
-              <span>₹{cartTotal.toLocaleString('en-IN')}</span>
-            </div>
-          </div>
-          <button type="submit" className="gold-luxury-btn btn-full">SUBMIT ORDER ›</button>
-        </form>
-      </ModalOverlay>
-
-      <ModalOverlay active={modals.orderSuccessModal} onClose={() => closeModal('orderSuccessModal')} cardClass="modal-sm text-center">
-        <div className="success-crest-icon">✦</div>
-        <h2 className="success-title">Order Placed Successfully</h2>
-        {lastCreatedOrder ? (
-          <div className="order-receipt-box">
-            <p><strong>Bill:</strong> {lastCreatedOrder.bill_no}</p>
-            <p><strong>Order:</strong> {lastCreatedOrder.order_number}</p>
-            <p><strong>Status:</strong> {orderStatusMeta(lastCreatedOrder.order_status).label}</p>
-            <p><strong>Total:</strong> ₹{Number(lastCreatedOrder.total_amount).toLocaleString('en-IN')}</p>
-          </div>
-        ) : null}
-        <p className="success-note">WhatsApp video call stays locked until Rakesh Cloth Stores confirms this order. Then open My Orders and tap Video Call on WhatsApp.</p>
-        <div className="modal-actions-row">
-          <button className="gold-luxury-btn" onClick={sendWhatsAppReceipt}>CONFIRM ON WHATSAPP</button>
-          <button
-            className="outline-gold-btn"
-            onClick={() => {
-              setViewingOrder(lastCreatedOrder);
-              closeModal('orderSuccessModal');
-              openModal('orderModal');
-            }}
-          >
-            VIEW ORDER
-          </button>
-        </div>
       </ModalOverlay>
 
       <ModalOverlay active={modals.orderModal} onClose={() => closeModal('orderModal')}>
@@ -269,7 +169,7 @@ export default function Modals() {
                   <b>{o.bill_no}</b>
                   <span className={`status-badge ${orderStatusMeta(o.order_status).key}`}>{orderStatusMeta(o.order_status).label}</span>
                 </div>
-                <div className="tiny-note">{new Date(o.created_at).toLocaleString('en-IN')}</div>
+                <div className="tiny-note">{new Date(o.created_at || o.date).toLocaleString('en-IN')}</div>
                 {(o.items || []).map((p, i) => (
                   <div className="mini-product" key={i}>
                     <img src={p.img || p.image_url} alt="" />
@@ -352,31 +252,6 @@ export default function Modals() {
             </FileUploadZone>
           </div>
           <button type="submit" className="gold-luxury-btn btn-full">PUBLISH REVIEW ›</button>
-        </form>
-      </ModalOverlay>
-
-      <ModalOverlay active={modals.adminLoginModal} onClose={() => {}} cardClass="modal-xs">
-        <div className="admin-login-header text-center">
-          <h2>Admin Login</h2>
-          <p>Only the authorised shop administrator can manage stock and orders.</p>
-        </div>
-        <form
-          className="luxury-form"
-          onSubmit={async (e) => {
-            e.preventDefault();
-            const fd = new FormData(e.target);
-            await handleAdminLogin(fd.get('username').toString().trim(), fd.get('password').toString());
-          }}
-        >
-          <div className="form-group">
-            <label>Admin ID</label>
-            <input name="username" defaultValue="admin" required />
-          </div>
-          <div className="form-group">
-            <label>Password</label>
-            <input name="password" type="password" required />
-          </div>
-          <button type="submit" className="gold-luxury-btn btn-full">OPEN DASHBOARD ›</button>
         </form>
       </ModalOverlay>
     </>

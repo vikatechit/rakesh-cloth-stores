@@ -1,5 +1,6 @@
 import { useEffect, useRef } from 'react';
-import { useStore } from '../context/StoreContext';
+import { Link, useNavigate } from 'react-router-dom';
+import { useStore } from '../context/Store';
 
 function phoneFromSettings(whatsappNumber) {
   const digits = String(whatsappNumber || '9985728175').replace(/\D/g, '');
@@ -48,7 +49,7 @@ export default function Hero() {
     return () => cleanups.forEach((fn) => fn());
   }, [heroSlides]);
 
-  const scrollTo = (id) => document.getElementById(id)?.scrollIntoView({ behavior: 'smooth' });
+  const navigate = useNavigate();
   const showcaseSlides = heroSlides.slice(0, 3);
 
   return (
@@ -72,10 +73,10 @@ export default function Hero() {
             with WhatsApp payment and WhatsApp video confirmation after your order is confirmed.
           </p>
           <div className="hero-cta-group">
-            <button className="gold-luxury-btn" onClick={() => scrollTo('collections')}>
+            <button className="gold-luxury-btn" onClick={() => navigate('/shop/sarees')}>
               SEE SAREES <span className="btn-arrow">›</span>
             </button>
-            <button className="outline-gold-btn" onClick={() => scrollTo('how')}>
+            <button className="outline-gold-btn" onClick={() => navigate('/how')}>
               HOW TO ORDER
             </button>
           </div>
@@ -92,9 +93,9 @@ export default function Hero() {
               </div>
               <div className="accordion-gallery" role="list" aria-label="Featured Collection Gallery" ref={rootRef}>
                 {showcaseSlides.map((slide, index) => (
-                  <a
+                  <Link
                     key={slide.id}
-                    href={slide.link || '#collections'}
+                    to={slide.link || '/shop'}
                     className={`ag-panel${index === 0 ? ' ag-panel--active' : ''}`}
                     role="listitem"
                   >
@@ -108,7 +109,7 @@ export default function Hero() {
                         <span className="ag-panel__text">{slide.label}</span>
                       </div>
                     </div>
-                  </a>
+                  </Link>
                 ))}
               </div>
             </div>

@@ -1,8 +1,10 @@
 import { useEffect } from 'react';
-import { useStore } from '../context/StoreContext';
+import { useNavigate } from 'react-router-dom';
+import { useStore } from '../context/Store';
 
 export default function CartDrawer() {
   const { cart, cartOpen, cartCount, cartTotal, closeCart, updateCartQty, placeOrderStart } = useStore();
+  const navigate = useNavigate();
 
   useEffect(() => {
     document.body.style.overflow = cartOpen ? 'hidden' : '';
@@ -54,7 +56,14 @@ export default function CartDrawer() {
             <span className="free-shipping-tag">Often within 1 day</span>
           </div>
           <div className="cart-checkout-actions">
-            <button className="gold-luxury-btn btn-full" onClick={placeOrderStart} disabled={!cart.length}>
+            <button
+              className="gold-luxury-btn btn-full"
+              onClick={() => {
+                placeOrderStart();
+                if (cart.length) navigate('/order');
+              }}
+              disabled={!cart.length}
+            >
               PLACE ORDER ›
             </button>
           </div>

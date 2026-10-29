@@ -1,34 +1,31 @@
-import { useStore } from '../context/StoreContext';
+import { Link, NavLink } from 'react-router-dom';
+import { useStore } from '../context/Store';
 
 export default function Header() {
-  const { cartCount, openCart, openModal, setMobileDrawerOpen, storeSettings, filterCategory, categories } = useStore();
+  const { cartCount, openCart, openModal, setMobileDrawerOpen, storeSettings, categories } = useStore();
   const logo = storeSettings.logo_url || '/logo.png';
-
-  const shopCategory = (cat) => {
-    filterCategory(cat);
-  };
 
   return (
     <header className="main-header" id="mainHeader">
       <div className="header-container">
-        <a href="#home" className="brand-logo-clean" aria-label="Rakesh Cloth Stores Home">
+        <Link to="/" className="brand-logo-clean" aria-label="Rakesh Cloth Stores Home">
           <img src={logo} alt="Rakesh Cloth Stores" className="main-logo-image" />
-        </a>
+        </Link>
 
         <nav className="desktop-nav">
-          <a href="#home" className="nav-link">HOME</a>
+          <NavLink to="/" className="nav-link" end>HOME</NavLink>
           <div className="nav-dropdown-wrapper">
-            <a href="#categories" className="nav-link">SHOP <span className="dropdown-arrow">▾</span></a>
+            <NavLink to="/shop" className="nav-link">SHOP <span className="dropdown-arrow">▾</span></NavLink>
             <div className="nav-dropdown-menu">
               {categories.map((cat) => (
-                <a key={cat.id} href="#categories" onClick={() => shopCategory(cat.slug)}>{cat.title}</a>
+                <Link key={cat.id} to={`/shop/${cat.slug}`}>{cat.title}</Link>
               ))}
             </div>
           </div>
-          <a href="#collections" className="nav-link">COLLECTIONS</a>
-          <a href="#how" className="nav-link">HOW TO ORDER</a>
-          <a href="#reviews-section" className="nav-link">REVIEWS</a>
-          <a href="#contact" className="nav-link">CONTACT</a>
+          <NavLink to="/categories" className="nav-link">COLLECTIONS</NavLink>
+          <NavLink to="/how" className="nav-link">HOW TO ORDER</NavLink>
+          <NavLink to="/reviews" className="nav-link">REVIEWS</NavLink>
+          <NavLink to="/contact" className="nav-link">CONTACT</NavLink>
         </nav>
 
         <div className="header-action-group">
@@ -46,7 +43,12 @@ export default function Header() {
             </svg>
             <span className="cart-text">BAG</span> <span className="cart-badge-count">{cartCount}</span>
           </button>
-          <button type="button" className="mobile-menu-toggle" aria-label="Open menu" onClick={() => setMobileDrawerOpen(true)}>
+          <button
+            type="button"
+            className="mobile-menu-toggle"
+            aria-label="Open menu"
+            onClick={() => setMobileDrawerOpen(true)}
+          >
             <span />
             <span />
             <span />

@@ -1,7 +1,9 @@
-import { useStore } from '../context/StoreContext';
+import { useNavigate } from 'react-router-dom';
+import { useStore } from '../context/Store';
 
 export default function Categories() {
-  const { categories, filterCategory } = useStore();
+  const { categories, setActiveCategory } = useStore();
+  const navigate = useNavigate();
 
   return (
     <section className="section-container" id="categories">
@@ -12,7 +14,15 @@ export default function Categories() {
       </div>
       <div className="category-cards-grid rks-category-grid">
         {categories.map((cat) => (
-          <button type="button" key={cat.id} className="category-card" onClick={() => filterCategory(cat.slug)}>
+          <button
+            type="button"
+            key={cat.id}
+            className="category-card"
+            onClick={() => {
+              setActiveCategory(cat.slug);
+              navigate(`/shop/${cat.slug}`);
+            }}
+          >
             <div className="category-img-holder">
               <img src={cat.image_url} alt={`${cat.title} Collection`} loading="lazy" />
               <div className="category-overlay-gradient" />

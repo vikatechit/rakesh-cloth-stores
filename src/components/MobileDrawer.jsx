@@ -1,5 +1,6 @@
 import { useEffect } from 'react';
-import { useStore } from '../context/StoreContext';
+import { Link } from 'react-router-dom';
+import { useStore } from '../context/Store';
 
 export default function MobileDrawer() {
   const { mobileDrawerOpen, setMobileDrawerOpen, storeSettings } = useStore();
@@ -28,13 +29,13 @@ export default function MobileDrawer() {
           <button type="button" className="drawer-close" onClick={close} aria-label="Close menu">✕</button>
         </div>
         <div className="drawer-links">
-          <a href="#home" onClick={close}>Home</a>
-          <a href="#categories" onClick={close}>Shop By Category</a>
-          <a href="#collections" onClick={close}>Collections</a>
-          <a href="#how" onClick={close}>How To Order</a>
-          <a href="#reviews-section" onClick={close}>Client Reviews</a>
-          <a href="#story" onClick={close}>Our Store</a>
-          <a href="#contact" onClick={close}>Contact</a>
+          <Link to="/" onClick={close}>Home</Link>
+          <Link to="/categories" onClick={close}>Shop By Category</Link>
+          <Link to="/shop" onClick={close}>Collections</Link>
+          <Link to="/how" onClick={close}>How To Order</Link>
+          <Link to="/reviews" onClick={close}>Client Reviews</Link>
+          <Link to="/about" onClick={close}>Our Store</Link>
+          <Link to="/contact" onClick={close}>Contact</Link>
         </div>
       </nav>
     </>
