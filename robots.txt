@@ -1,3 +1,6 @@
 User-agent: *
 Allow: /
 Disallow: /admin
+
+Host: https://rakeshclothstore.in
+Sitemap: https://rakeshclothstore.in/sitemap.xml

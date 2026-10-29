@@ -3,6 +3,7 @@ export const BRAND = {
   short: 'Rakesh Cloth Stores',
   tagline: 'Quality Matters',
   sub: 'Kurmannapalem, Visakhapatnam',
+  siteUrl: 'https://rakeshclothstore.in',
   sheetUrl: '',
   scriptUrl: '',
   whatsapp: '919985728175',
