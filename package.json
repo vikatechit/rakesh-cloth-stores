@@ -9,6 +9,7 @@
     "preview": "vite preview"
   },
   "dependencies": {
+    "@vercel/blob": "^2.8.2",
     "heic2any": "^0.0.4",
     "react": "^19.1.0",
     "react-dom": "^19.1.0",

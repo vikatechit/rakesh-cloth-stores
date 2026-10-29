@@ -2,6 +2,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import { CATALOG, HERO_SLIDES, REVIEWS } from '../data/catalog';
 import { BRAND, CATEGORIES, PRICE_TIERS, SHOP_ADDRESS, formatWhatsapp, waLink } from '../data/brand';
 import { checkPassword, fetchOrders, fetchProducts, fetchSettings, postAction, uploadImage } from '../lib/sheets';
+import { fetchLiveCatalog, hideLiveProduct, saveLivePassword, saveLiveProduct, uploadLivePhoto } from '../lib/live';
 import { orderStamp } from '../lib/format';
 import { processPhoto } from '../lib/image';
 
@@ -158,6 +159,7 @@ export function StoreProvider({ children }) {
     return saved.length ? saved : CATEGORIES;
   });
   const [sheetProducts, setSheetProducts] = useState(null);
+  const [liveProducts, setLiveProducts] = useState([]);
   const [sheetNote, setSheetNote] = useState('');
   const [authed, setAuthed] = useState(() => sessionStorage.getItem('rks_admin_session_v5') === 'yes');
   const [cartOpen, setCartOpen] = useState(false);
@@ -239,15 +241,21 @@ export function StoreProvider({ children }) {
   }, [scriptUrl]);
 
   const allProducts = useMemo(() => {
-    const base = (sheetProducts?.length ? sheetProducts : CATALOG).map((p) => normalizeProduct(p));
-    const ids = new Set(base.map((p) => p.id));
-    const names = new Set(base.map((p) => p.name.toLowerCase()));
-    custom.forEach((p) => {
-      const n = normalizeProduct(p);
-      if (!ids.has(n.id) && !names.has(n.name.toLowerCase())) base.unshift(n);
-    });
-    return base;
-  }, [sheetProducts, custom]);
+    const map = new Map();
+    const add = (list) => {
+      (list || []).forEach((raw) => {
+        const prev = map.get(raw.id);
+        const p = normalizeProduct(raw, prev);
+        map.set(p.id, p);
+      });
+    };
+    add(CATALOG);
+    add(sheetProducts);
+    add(liveProducts);
+    add(custom);
+    const catalogIds = new Set(CATALOG.map((p) => p.id));
+    return [...map.values()].sort((a, b) => Number(catalogIds.has(a.id)) - Number(catalogIds.has(b.id)));
+  }, [sheetProducts, liveProducts, custom]);
 
   const products = useMemo(
     () => allProducts.filter((p) => !hidden.includes(p.id) && p.available !== 'NO' && p.stock > 0),
@@ -260,9 +268,20 @@ export function StoreProvider({ children }) {
   );
 
   useEffect(() => {
+    let cancel = false;
+    fetchLiveCatalog()
+      .then((data) => {
+        if (cancel || !data?.ok || !Array.isArray(data.products)) return;
+        setLiveProducts(data.products.map((p) => normalizeProduct(p)));
+        if (data.products.length) setSheetNote('Catalogue is live on every phone.');
+      })
+      .catch(() => {});
+    return () => { cancel = true; };
+  }, []);
+
+  useEffect(() => {
     if (!scriptUrl) {
       setSheetProducts(null);
-      setSheetNote('Google Sheet is not connected. This browser is using the built-in catalogue. Paste the Apps Script URL in Admin → Settings to save changes for every visitor.');
       return undefined;
     }
     let cancel = false;
@@ -605,6 +624,7 @@ export function StoreProvider({ children }) {
     }
     localStorage.setItem(K.hash, await sha256(next));
     sessionStorage.setItem('rks_admin_pw', next);
+    try { await saveLivePassword(current, next); } catch { /* local password still works on this phone */ }
     return { ok: true };
   };
 
@@ -704,6 +724,12 @@ export function StoreProvider({ children }) {
     return { ok: true };
   };
 
+  const applyLiveProducts = (data) => {
+    if (data?.ok && Array.isArray(data.products)) {
+      setLiveProducts(data.products.map((p) => normalizeProduct(p)));
+    }
+  };
+
   const saveProductPhoto = async (file) => {
     if (!file) return { ok: false, error: 'Choose a photo first.' };
     let processed;
@@ -712,34 +738,32 @@ export function StoreProvider({ children }) {
     } catch (err) {
       return { ok: false, error: err?.message || 'This photo could not be used.' };
     }
-    if (!scriptUrl) {
-      return {
-        ok: true,
-        url: processed.dataUrl,
-        warning: 'Photo is ready on this phone. Connect the Google Sheet in Settings so every visitor sees it on the live website.',
-      };
-    }
     const password = sessionStorage.getItem('rks_admin_pw') || '';
+    const base64 = processed.dataUrl.split(',')[1] || '';
     try {
-      const data = await uploadImage(scriptUrl, {
-        password,
+      const live = await uploadLivePhoto(password, {
         name: processed.name,
         mime: processed.mime,
-        data: processed.dataUrl.split(',')[1] || '',
+        data: base64,
       });
-      if (data?.ok && data.url) return { ok: true, url: data.url };
-      return {
-        ok: true,
-        url: processed.dataUrl,
-        warning: 'Photo preview is ready. Paste the latest Code.gs into Apps Script and deploy a new web app version so photos save for every visitor.',
-      };
+      if (live?.ok && live.url) return { ok: true, url: live.url };
     } catch {
-      return {
-        ok: true,
-        url: processed.dataUrl,
-        warning: 'Photo preview is ready. The live sheet could not store it yet. Update Code.gs and deploy a new web app version.',
-      };
+      /* try Google Drive next */
     }
+    if (scriptUrl) {
+      try {
+        const data = await uploadImage(scriptUrl, {
+          password,
+          name: processed.name,
+          mime: processed.mime,
+          data: base64,
+        });
+        if (data?.ok && data.url) return { ok: true, url: data.url };
+      } catch {
+        /* fall through */
+      }
+    }
+    return { ok: false, error: 'The photo could not be saved for every phone. Check the internet and try again.' };
   };
 
   const addProduct = async (draft) => {
@@ -760,40 +784,54 @@ export function StoreProvider({ children }) {
       desc: (draft.desc || draft.description || '').trim(),
       available: 'YES',
     });
+    if (String(product.image_url || '').startsWith('data:')) {
+      return { ok: false, error: 'Save the photo with Take photo or Gallery first so every phone can see it.' };
+    }
     setCustom((prev) => [product, ...prev]);
+    const password = sessionStorage.getItem('rks_admin_pw') || '';
+    try {
+      const live = await saveLiveProduct(password, product);
+      if (!live?.ok) {
+        return { ok: false, error: live?.error || 'Could not publish this piece to the live website.' };
+      }
+      applyLiveProducts(live);
+    } catch {
+      return { ok: false, error: 'Could not publish this piece to the live website. Try again.' };
+    }
     if (scriptUrl) {
-      const password = sessionStorage.getItem('rks_admin_pw') || '';
-      const sheetImg = product.image_url.startsWith('data:') ? '' : product.image_url;
       try {
         await postAction(scriptUrl, 'addproduct', {
           password,
           ...product,
           cat: product.category,
-          img: sheetImg,
-          image_url: sheetImg,
+          img: product.image_url,
+          image_url: product.image_url,
           desc: product.description,
         });
       } catch {
-        return { ok: true, warning: 'Added on this browser. Google Sheet could not be updated.' };
-      }
-      if (product.image_url.startsWith('data:')) {
-        return { ok: true, product, warning: 'Item is on this phone. Update Code.gs and deploy a new web app version so the photo is stored for every visitor.' };
+        /* live site already has the item */
       }
     }
     return { ok: true, product };
   };
 
   const updateProduct = async (id, patch) => {
+    const current = productById(id);
     const apply = (p) => (p.id === id ? normalizeProduct({ ...p, ...patch }) : p);
     setCustom((prev) => prev.map(apply));
     setSheetProducts((prev) => (prev ? prev.map(apply) : prev));
-    if (!scriptUrl) return { ok: true, warning: 'Updated on this browser. Connect Google Sheet to publish for every visitor.' };
+    setLiveProducts((prev) => prev.map(apply));
+    const next = normalizeProduct({ ...(current || {}), ...patch, id });
     const password = sessionStorage.getItem('rks_admin_pw') || '';
     try {
-      const data = await postAction(scriptUrl, 'updateproduct', { password, id, ...patch });
-      if (!data?.ok) return { ok: true, warning: data?.error || 'Updated locally.' };
+      const live = await saveLiveProduct(password, next);
+      if (live?.ok) applyLiveProducts(live);
+      else return { ok: false, error: live?.error || 'Could not update the live website.' };
     } catch {
-      return { ok: true, warning: 'Updated on this website. Google Sheet could not be updated.' };
+      return { ok: false, error: 'Could not update the live website. Try again.' };
+    }
+    if (scriptUrl) {
+      try { await postAction(scriptUrl, 'updateproduct', { password, id, ...patch }); } catch { /* live site already updated */ }
     }
     return { ok: true };
   };
@@ -801,8 +839,14 @@ export function StoreProvider({ children }) {
   const deleteProduct = async (id) => {
     setHidden((prev) => (prev.includes(id) ? prev : [...prev, id]));
     setCustom((prev) => prev.filter((p) => p.id !== id));
+    const password = sessionStorage.getItem('rks_admin_pw') || '';
+    try {
+      const live = await hideLiveProduct(password, id);
+      if (live?.ok) applyLiveProducts(live);
+    } catch {
+      /* still hidden on this phone */
+    }
     if (scriptUrl) {
-      const password = sessionStorage.getItem('rks_admin_pw') || '';
       try { await postAction(scriptUrl, 'updateproduct', { password, id, available: 'NO' }); } catch { /* local hide */ }
     }
     return { ok: true };
